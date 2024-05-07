@@ -58,8 +58,8 @@ int main(int argc, char **argv) {
   std::cout << "Client connected\n";
   std::array<char, 1024> buffer;
   int valread = read(server_fd, buffer.data(), sizeof(buffer) - 1);
-  std::cout << "la\n";
-  std::cout << 'l' << buffer.data() << "\n";
+  // std::cout << "la\n";
+  // std::cout << 'l' << buffer.data() << "\n";
   send(server_fd, "HTTP/1.1 200 OK\r\n\r\n", 20, 0);
   close(server_fd);
 
