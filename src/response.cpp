@@ -30,7 +30,7 @@ std::string Response::respond(const Request &request,
     requestTarget.erase(requestTarget.begin() + idx2,
                         requestTarget.begin() + 7);
     fileName = requestTarget;
-    std::ifstream file;
+    std::fstream file;
     file.open(dir + "/" + fileName, std::ios::in);
 
     if (file.is_open()) {
