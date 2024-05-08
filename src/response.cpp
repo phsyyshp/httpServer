@@ -33,7 +33,7 @@ std::string Response::respond(const Request &request,
     std::ifstream file;
     file.open(dir + "/" + fileName);
 
-    if (file) {
+    if (file.is_open()) {
 
       startLine = "HTTP/1.1 200 OK\r\n";
       contentType = "Content-Type: application/octet-stream\r\n";
@@ -41,6 +41,7 @@ std::string Response::respond(const Request &request,
         ;
       }
       contentLength = "Content-Length:" + std::to_string(body.length()) + space;
+      file.close();
       return startLine + contentType + contentLength + "\r\n" + body;
     }
 
