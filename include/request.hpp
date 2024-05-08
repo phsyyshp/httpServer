@@ -4,12 +4,17 @@
 #include <sstream>
 #include <unordered_map>
 #include <vector>
-enum requestToken { METHOD, PATH, VERSION };
+enum requestToken { METHOD, REQUEST_TARGET, VERSION };
+struct RequestLine {
+  std::string method;
+  std::string requestTarget;
+  std::string version;
+};
 class Request {
 public:
   Request(const std::array<char, 1024> &buffer_) : buffer(buffer_) {}
-  std::string getRequestLine() const;
-  std::unordered_map<std::string, std::string> parseRequestLine() const;
+  RequestLine getRequestLine() const;
+  std::unordered_map<std::string, std::string> getHeaderHash() const;
 
 private:
   std::array<char, 1024> buffer;

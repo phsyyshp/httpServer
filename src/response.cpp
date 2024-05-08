@@ -2,27 +2,30 @@
 std::string Response::respond(const Request &request) const {
 
   std::string out;
+  std::string body;
   std::string startLine;
-  std::unordered_map<std::string, std::string> responseMap;
-  std::string path = request.parseRequestLine()["path"];
+  RequestLine requestLine = request.getRequestLine();
+  std::string requestTarget = requestLine.requestTarget;
   std::string textToEcho;
-
-  startLine = "HTTP/1.1 200 OK\r\n";
-  auto idx = path.find("/echo/", 0);
   std::string space = "\r\n";
-  if (idx != std::string::npos) {
-    path.erase(path.begin() + idx, path.begin() + 6);
-    std::string contentType = "Content-Type: text/plain\r\n";
-    auto body = path;
-    std::string contentLength =
-        "Content-Length:" + std::to_string(body.length()) + space;
-
-    out = startLine + contentType + contentLength + "\r\n" + body;
-  } else if (request.parseRequestLine()["path"] == "/") {
-    out = startLine + space;
-
-  } else {
-    out = "HTTP/1.1 404 NOT FOUND\r\n\r\n";
+  startLine = "HTTP/1.1 200 OK\r\n";
+  auto idx = requestTarget.find("/echo/", 0);
+  if (requestLine.requestTarget == "/") {
+    return startLine + space;
   }
-  return out;
+
+  if (idx != std::string::npos) {
+    requestTarget.erase(requestTarget.begin() + idx, requestTarget.begin() + 6);
+    body = requestTarget;
+  } else if (requestLine.requestTarget == "/user-agent") {
+    body = request.getHeaderHash()["User-Agent"];
+  } else {
+    return "HTTP/1.1 404 NOT FOUND\r\n\r\n";
+  }
+
+  std::string contentType = "Content-Type: text/plain\r\n";
+  std::string contentLength =
+      "Content-Length:" + std::to_string(body.length()) + space;
+
+  return startLine + contentType + contentLength + "\r\n" + body;
 }
