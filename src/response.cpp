@@ -31,7 +31,7 @@ std::string Response::respond(const Request &request,
                         requestTarget.begin() + 7);
     fileName = requestTarget;
     std::ifstream file;
-    file.open(dir + "/" + fileName);
+    file.open(dir + "/" + fileName, std::ios::in);
 
     if (file.is_open()) {
 
