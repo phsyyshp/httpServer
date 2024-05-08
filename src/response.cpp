@@ -1,5 +1,6 @@
 #include "response.hpp"
-std::string Response::respond(const Request &request) const {
+std::string Response::respond(const Request &request,
+                              const std::string &dir) const {
 
   std::string out;
   std::string body;
