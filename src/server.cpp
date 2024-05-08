@@ -62,10 +62,10 @@ int main(int argc, char **argv) {
   std::array<char, 1024> buffer;
   int valread = read(socket_fd, buffer.data(), sizeof(buffer) - 1);
   Request request(buffer);
-  for (auto b : buffer) {
+  // for (auto b : buffer) {
 
-    std::cout << b;
-  }
+  //   std::cout << b;
+  // }
 
   std::string responseBuffer;
   if (request.parseRequestLine()["path"] == "/") {
