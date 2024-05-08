@@ -17,7 +17,7 @@ void handleConnection(int socket_fd) {
 
   if (socket_fd < 0) {
   }
-  std::cout << "Client connected\n";
+  // std::cout << "Client connected\n";
   std::array<char, 1024> buffer;
   int valread = read(socket_fd, buffer.data(), sizeof(buffer) - 1);
   Request request(buffer);
