@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
   }
 
   std::cout << responseBuffer;
-  send(socket_fd, responseBuffer.data(), 20, 0);
+  send(socket_fd, responseBuffer.data(), sizeof(responseBuffer) - 1, 0);
   std::cout << "lala";
   close(server_fd);
 
