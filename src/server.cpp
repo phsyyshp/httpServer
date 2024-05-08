@@ -30,6 +30,11 @@ void handleConnection(int socket_fd) {
   send(socket_fd, responseBuffer.data(), responseBuffer.size(), 0);
 }
 int main(int argc, char **argv) {
+  std::string command;
+  if (argc > 1) {
+    command = argv[2];
+    std::cout << command;
+  }
   // You can use print statements as follows for debugging, they'll be visible
   // when running tests.
   std::cout << "Logs from your program will appear here!\n";
