@@ -15,9 +15,9 @@ std::string Response::respond(const Request &request) const {
   std::string contentType = "Content-Type: text/plain\r\n\r\n";
   std::string contentLength =
       "Content-Length:" + std::to_string(path.length()) + space;
-  auto body = path + " \r\n";
+  auto body = path + " \r\n\r\n";
 
-  out = startLine + contentType + contentLength + "\r\n\r\n" + path;
+  out = startLine + contentType + contentLength + "\r\n" + path;
   //   if (request.parseRequestLine()["path"] == "/") {
   //   } else {
   //     startLine = "HTTP/1.1 404 NOT FOUND\r\n\r\n";
