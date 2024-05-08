@@ -13,11 +13,8 @@
 #include <sys/types.h>
 #include <thread>
 #include <unistd.h>
-void handleConnection(sockaddr_in client_addr, int server_fd) {
+void handleConnection(int socket_fd) {
 
-  int client_addr_len = sizeof(client_addr);
-  int socket_fd = accept(server_fd, (struct sockaddr *)&client_addr,
-                         (socklen_t *)&client_addr_len);
   if (socket_fd < 0) {
   }
   std::cout << "Client connected\n";
@@ -75,8 +72,23 @@ int main(int argc, char **argv) {
   struct sockaddr_in client_addr;
 
   std::cout << "Waiting for a client to connect...\n";
-  std::thread t(handleConnection, client_addr, server_fd);
-  t.join();
+  int client_addr_len = sizeof(client_addr);
+  int socket_fd;
+  std::vector<std::thread> threads;
+  while (true) {
+    socket_fd = accept(server_fd, (struct sockaddr *)&client_addr,
+                       (socklen_t *)&client_addr_len);
+    if (socket_fd < 0) {
+      std::cerr << "Failed to accept connection\n";
+      continue;
+    }
+    threads.emplace_back(handleConnection, socket_fd);
+  }
+
+  for (auto &t : threads) {
+    if (t.joinable())
+      t.join();
+  }
   close(server_fd);
 
   return 0;
