@@ -11,7 +11,7 @@ std::string Response::respond(const Request &request) const {
     path.erase(path.begin() + idx, path.begin() + 6);
   }
   std::string space = "\r\n\r\n";
-  startLine = "HTTP/1.1 200 OK\r\n\r\n";
+  startLine = "HTTP/1.1 200 OK\r\n";
   std::string contentType = "Content-Type: text/plain\r\n\r\n";
   std::string contentLength =
       "Content-Length:" + std::to_string(path.length()) + space;
