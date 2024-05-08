@@ -13,11 +13,11 @@ std::string Response::respond(const Request &request) const {
   std::string space = "\r\n";
   startLine = "HTTP/1.1 200 OK\r\n";
   std::string contentType = "Content-Type: text/plain\r\n";
-  std::string contentLength =
-      "Content-Length:" + std::to_string(path.length()) + space;
   auto body = path + "\r\n";
+  std::string contentLength =
+      "Content-Length:" + std::to_string(body.length()) + space;
 
-  out = startLine + contentType + contentLength + "\r\n\r\n" + path + "\r\n";
+  out = startLine + contentType + contentLength + "\r\n" + body;
   //   if (request.parseRequestLine()["path"] == "/") {
   //   } else {
   //     startLine = "HTTP/1.1 404 NOT FOUND\r\n\r\n";
