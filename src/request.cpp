@@ -45,4 +45,5 @@ std::vector<std::string> Request::tokenize(const std::string &string) const {
   while (stream >> token) {
     out.push_back(token);
   }
+  return out;
 }
