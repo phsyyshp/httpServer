@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
   // }
   Response response;
   responseBuffer = response.respond(request);
-  std::cout << responseBuffer;
+  // std::cout << responseBuffer;
 
   send(socket_fd, responseBuffer.data(), sizeof(responseBuffer) - 1, 0);
   close(server_fd);
