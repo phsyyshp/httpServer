@@ -10,7 +10,7 @@ std::string Response::respond(const Request &request) const {
   if (idx != std::string::npos) {
     path.erase(path.begin() + idx, path.begin() + 6);
   }
-  std::string space = "\r\n\r\n";
+  std::string space = "\r\n";
   startLine = "HTTP/1.1 200 OK\r\n";
   std::string contentType = "Content-Type: text/plain\r\n";
   std::string contentLength =
