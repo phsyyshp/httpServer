@@ -35,6 +35,7 @@ std::string Response::respond(const Request &request,
 
     if (file.is_open()) {
 
+      std::cout << "lalaa";
       startLine = "HTTP/1.1 200 OK\r\n";
       contentType = "Content-Type: application/octet-stream\r\n";
       while (getline(file, line)) {
