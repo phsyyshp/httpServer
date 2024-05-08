@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
       continue;
     }
     handleConnection(socket_fd, dir);
-    threads.emplace_back(handleConnection, socket_fd);
+    threads.emplace_back(handleConnection, socket_fd, dir);
   }
 
   for (auto &t : threads) {
