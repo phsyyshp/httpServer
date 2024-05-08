@@ -44,6 +44,7 @@ std::string Response::respond(const Request &request,
       file.close();
       return startLine + contentType + contentLength + "\r\n" + body;
     }
+    file.close();
 
     return "HTTP/1.1 404 NOT FOUND\r\n\r\n";
   } else {
