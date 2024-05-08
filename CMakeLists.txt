@@ -10,3 +10,4 @@ src/request.cpp)
 
 add_executable(server ${SOURCE_FILES})
 target_include_directories(server PRIVATE ${INCLUDE_DIR})
+target_link_libraries(your_target_name pthread)
