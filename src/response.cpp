@@ -7,7 +7,7 @@ std::string Response::respond(const Request &request,
   std::string startLine;
   std::string contentLength;
   std::string contentType;
-
+  std::string line;
   RequestLine requestLine = request.getRequestLine();
   std::string requestTarget = requestLine.requestTarget;
   std::string textToEcho;
@@ -37,8 +37,8 @@ std::string Response::respond(const Request &request,
 
       startLine = "HTTP/1.1 200 OK\r\n";
       contentType = "Content-Type: application/octet-stream\r\n";
-      while (getline(file, body)) {
-        ;
+      while (getline(file, line)) {
+        body += line;
       }
       contentLength = "Content-Length:" + std::to_string(body.length()) + space;
       file.close();
