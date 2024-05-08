@@ -1,4 +1,5 @@
 #include "request.hpp"
+#include "response.hpp"
 #include <arpa/inet.h>
 #include <array>
 #include <cstdlib>
@@ -62,21 +63,17 @@ int main(int argc, char **argv) {
   std::array<char, 1024> buffer;
   int valread = read(socket_fd, buffer.data(), sizeof(buffer) - 1);
   Request request(buffer);
-  // for (auto b : buffer) {
-
-  //   std::cout << b;
-  // }
 
   std::string responseBuffer;
-  if (request.parseRequestLine()["path"] == "/") {
-    responseBuffer = "HTTP/1.1 200 OK\r\n\r\n";
-  } else {
-    responseBuffer = "HTTP/1.1 404 NOT FOUND\r\n\r\n";
-  }
+  // if (request.parseRequestLine()["path"] == "/") {
+  //   responseBuffer = "HTTP/1.1 200 OK\r\n\r\n";
+  // } else {
+  //   responseBuffer = "HTTP/1.1 404 NOT FOUND\r\n\r\n";
+  // }
+  Response response;
+  responseBuffer = response.respond(request);
 
-  std::cout << responseBuffer;
   send(socket_fd, responseBuffer.data(), sizeof(responseBuffer) - 1, 0);
-  std::cout << "lala";
   close(server_fd);
 
   return 0;

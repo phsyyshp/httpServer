@@ -5,6 +5,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(INCLUDE_DIR include)
 
 set(SOURCE_FILES src/server.cpp
+src/response.cpp
 src/request.cpp)
 
 add_executable(server ${SOURCE_FILES})
