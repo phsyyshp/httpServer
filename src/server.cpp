@@ -71,10 +71,10 @@ int main(int argc, char **argv) {
   if (request.parseRequestLine()["path"] == "/") {
     responseBuffer = "HTTP/1.1 200 OK\r\n\r\n";
   } else {
-
     responseBuffer = "HTTP/1.1 404 NOT FOUND\r\n\r\n";
   }
 
+  std::cout << responseBuffer;
   send(socket_fd, responseBuffer.data(), 20, 0);
   close(server_fd);
 
