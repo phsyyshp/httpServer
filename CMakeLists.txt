@@ -6,6 +6,7 @@ set(INCLUDE_DIR include)
 
 set(SOURCE_FILES src/server.cpp
 src/response.cpp
+src/get.cpp
 src/request.cpp)
 
 add_executable(server ${SOURCE_FILES})

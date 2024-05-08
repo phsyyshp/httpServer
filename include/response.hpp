@@ -4,5 +4,6 @@ class Response {
 
 public:
   Response() {}
-  std::string respond(const Request &request) const;
+  std::string respond(const Request &request,
+                      const std::string &dir = "") const;
 };
