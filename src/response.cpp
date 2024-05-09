@@ -31,9 +31,8 @@ std::string Response::respond(const Request &request,
                         requestTarget.begin() + 7);
     fileName = requestTarget;
     std::ifstream file;
-    file.open(dir + "/" + fileName + "938");
+    file.open(dir + "/" + fileName);
     std::cout << fileName;
-    std::cout << !file;
     if (!file) {
       return "HTTP/1.1 404 NOT FOUND\r\n\r\n";
     } else {
