@@ -30,12 +30,11 @@ std::string Response::respond(const Request &request,
     requestTarget.erase(requestTarget.begin() + idx2,
                         requestTarget.begin() + 7);
     fileName = requestTarget;
-    std::fstream file;
-    file.open(dir + "/" + fileName, std::ios::in);
+    std::ifstream file;
+    file.open(dir + "/" + fileName);
     std::cout << fileName;
-    std::cout << file.is_open();
 
-    if (file.is_open()) {
+    if (file) {
       startLine = "HTTP/1.1 200 OK\r\n";
       contentType = "Content-Type: application/octet-stream\r\n";
       while (getline(file, line)) {
