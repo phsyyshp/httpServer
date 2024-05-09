@@ -7,10 +7,6 @@
 
 RequestLine Request::getRequestLine() const { return requestLine; }
 std::unordered_map<std::string, std::string> Request::getHeaderHash() const {
-  for (auto [key, value] : headersHash) {
-
-    std::cout << key << " " << value << "\n";
-  }
   return headersHash;
 }
 std::array<char, 1024> Request::getBody() const { return body; }
@@ -24,8 +20,9 @@ void Request::preProcess(std::array<char, 1024> &buffer) {
     }
   }
 }
-void Request::parse(std::array<char, 1024> &buffer) {
-
+bool Request::parse(std::array<char, 1024> &buffer) {
+  bool isValid = true;
+  false;
   // Step 1.
   preProcess(buffer);
 
@@ -41,11 +38,11 @@ void Request::parse(std::array<char, 1024> &buffer) {
   auto methodEndIt = std::find(buffer.begin(), requestLineEndIt, ' ');
   auto requestTargetIt = std::find(methodEndIt + 1, requestLineEndIt, ' ');
 
-  std::string method(buffer.begin(), methodEndIt);
+  std::string token(buffer.begin(), methodEndIt);
   std::string requestTarget(methodEndIt + 1, requestTargetIt);
   std::string version(requestTargetIt + 1, requestLineEndIt);
 
-  requestLine.method = method;
+  requestLine.method = token;
   requestLine.requestTarget = requestTarget;
   requestLine.version = version;
 
@@ -96,6 +93,7 @@ void Request::parse(std::array<char, 1024> &buffer) {
     body[i] = *it;
     i++;
   }
+  return isValid;
 }
 
 bool Request::isWhiteSpace(char c) const {

@@ -28,11 +28,16 @@ void handleConnection(int socket_fd, std::string dir) {
   }
   buffer[valread] = '\0'; // Ensure null-termination
   Request request;
-  request.parse(buffer);
-
   std::string responseBuffer;
   Response response;
-  responseBuffer = response.respond(request, dir);
+
+  if (request.parse(buffer)) {
+
+    responseBuffer = response.respond(request, dir);
+  } else {
+    responseBuffer = response.badRerquest();
+  }
+
   // std::cout << responseBuffer;
 
   send(socket_fd, responseBuffer.data(), responseBuffer.size(), 0);
