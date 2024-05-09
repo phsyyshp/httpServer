@@ -32,21 +32,16 @@ std::string Response::respond(const Request &request,
     fileName = requestTarget;
     std::fstream file;
     file.open(dir + "/" + fileName, std::ios::in);
-    std::cout << file.is_open();
     if (file.is_open()) {
-
-      std::cout << "lalaa";
       startLine = "HTTP/1.1 200 OK\r\n";
       contentType = "Content-Type: application/octet-stream\r\n";
       while (getline(file, line)) {
-        body += line;
+        body += line + "\n";
       }
       contentLength = "Content-Length:" + std::to_string(body.length()) + space;
       file.close();
       return startLine + contentType + contentLength + "\r\n" + body;
     }
-    std::cout << "lal";
-    file.close();
 
     return "HTTP/1.1 404 NOT FOUND\r\n\r\n";
   } else {
