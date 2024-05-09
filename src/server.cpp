@@ -96,6 +96,6 @@ int main(int argc, char **argv) {
       t.join();
   }
   close(server_fd);
-
+  std::cout << "lalal";
   return 0;
 }
