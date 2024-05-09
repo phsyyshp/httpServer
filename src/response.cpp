@@ -43,7 +43,6 @@ std::string Response::respond(const Request &request,
         body += line;
       }
       contentLength = "Content-Length:" + std::to_string(body.length()) + space;
-      file.close();
       return startLine + contentType + contentLength + "\r\n" + body;
     }
   } else {
