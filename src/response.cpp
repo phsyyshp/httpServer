@@ -5,7 +5,7 @@ std::string Response::respond(const Request &request,
   RequestLine requestLine = request.getRequestLine();
   if (requestLine.method == "GET") {
     return get(request, dir);
-  } else if (requestLine.method == "POST ") {
+  } else if (requestLine.method == "POST") {
     return post(request, dir);
   }
   return "a";
