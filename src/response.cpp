@@ -8,6 +8,7 @@ std::string Response::respond(const Request &request,
   } else if (requestLine.method == "POST ") {
     return post(request, dir);
   }
+  return "a";
 }
 
 std::string Response::post(const Request &request,
@@ -45,6 +46,7 @@ std::string Response::post(const Request &request,
     contentLength = "Content-Length:" + std::to_string(7) + space;
     return startLine + contentType + contentLength + "\r\n" + "written";
   }
+  return "A";
 }
 std::string Response::get(const Request &request,
                           const std::string &dir) const {
