@@ -33,6 +33,68 @@ RequestLine Request::getRequestLine() const {
   return requestLine;
 }
 
+std::string Request::getBody() const {
+  std::string body;
+
+  std::string requestLine;
+  int i = 0;
+  for (i = 0; i < buffer.size() - 1; i++) {
+    char letter = buffer[i];
+    if (letter == '\r' && buffer[i + 1] == '\n') {
+      break;
+    }
+    requestLine.push_back(letter);
+  }
+
+  // std::string headerFieldLines;
+  std::unordered_map<std::string, std::string> headersHash;
+  int idxOfTokenOnLine = 0;
+  int lineNumber = 0;
+  std::string token;
+  std::string fieldName;
+  std::string fieldValue;
+
+  int headerLinesStartIdx = i + 2;
+  if (buffer[headerLinesStartIdx] == '\r' &&
+      buffer[headerLinesStartIdx + 1] == '\n') {
+    ;
+  } else {
+    // Header field lines
+    for (int i = headerLinesStartIdx; i < buffer.size() - 3; i++) {
+      char letter = buffer[i];
+      if (letter == '\r' && buffer[i + 1] == '\n' && buffer[i + 2] == '\r' &&
+          buffer[i + 3] == '\n') {
+        break;
+      }
+      if (letter == '\r' && buffer[i + 1] == '\n') {
+        idxOfTokenOnLine = 0;
+        fieldName.pop_back(); // delete the :;
+        headersHash[fieldName] = fieldValue;
+        fieldName = "";
+        fieldValue = "";
+
+        i++; // In order to skip next '\n'
+        continue;
+      }
+
+      if (letter == ' ') {
+        idxOfTokenOnLine++;
+        continue;
+      }
+      if (idxOfTokenOnLine == 0) {
+        fieldName.push_back(letter);
+      } else {
+        fieldValue.push_back(letter);
+      }
+    }
+  }
+  int bodyLineStartIdx = i + 4;
+  for (int i = bodyLineStartIdx; i < buffer.size(); i++) {
+    body += buffer[i];
+  }
+  return body;
+}
+
 std::unordered_map<std::string, std::string> Request::getHeaderHash() const {
 
   std::string requestLine;
