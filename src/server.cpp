@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
       std::cerr << "Failed to accept connection\n";
       // continue;
     }
-    handleConnection(socket_fd, dir);
+    // handleConnection(socket_fd, dir);
     threads.emplace_back(handleConnection, socket_fd, dir);
   }
 
