@@ -17,6 +17,7 @@ std::string Response::respond(const Request &request,
   auto idx2 = requestLine.requestTarget.find("/files/", 0);
   std::string fileName;
 
+  // std::cout << "halala";
   if (requestLine.requestTarget == "/") {
     return startLine + space;
   }
@@ -34,18 +35,20 @@ std::string Response::respond(const Request &request,
     file.open(dir + "/" + fileName);
     std::cout << fileName;
     if (!file) {
-      return "HTTP/1.1 404 NOT FOUND\r\n\r\n";
-    } else {
-
-      startLine = "HTTP/1.1 200 OK\r\n";
-      contentType = "Content-Type: application/octet-stream\r\n";
-      while (getline(file, line)) {
-        body += line;
-      }
-      contentLength = "Content-Length:" + std::to_string(body.length()) + space;
-      return startLine + contentType + contentLength + "\r\n" + body;
+      startLine = "HTTP/1.1 404 NOT FOUND\r\n";
+      return startLine + "Connection: close";
     }
+
+    startLine = "HTTP/1.1 200 OK\r\n";
+    contentType = "Content-Type: application/octet-stream\r\n";
+    while (getline(file, line)) {
+      body += line;
+    }
+    contentLength = "Content-Length:" + std::to_string(body.length()) + space;
+    return startLine + contentType + contentLength + "\r\n" + body;
+
   } else {
+    std::cout << "halala";
     return "HTTP/1.1 404 NOT FOUND\r\n\r\n";
   }
 
