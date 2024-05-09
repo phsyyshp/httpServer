@@ -36,7 +36,7 @@ std::string Response::respond(const Request &request,
       startLine = "HTTP/1.1 200 OK\r\n";
       contentType = "Content-Type: application/octet-stream\r\n";
       while (getline(file, line)) {
-        body += line + "\r\n";
+        body += line;
       }
       contentLength =
           "Content-Length:" + std::to_string(body.length() - 2) + space;
