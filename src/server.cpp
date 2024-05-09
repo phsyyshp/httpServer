@@ -16,10 +16,17 @@
 void handleConnection(int socket_fd, std::string dir) {
 
   if (socket_fd < 0) {
+    std::cerr << "Invalid socket file descriptor\n";
+    return; // E
   }
   // std::cout << "Client connected\n";
   std::array<char, 1024> buffer;
   int valread = read(socket_fd, buffer.data(), sizeof(buffer) - 1);
+  if (valread < 0) {
+    std::cerr << "Error reading from socket\n";
+    return; // Handle read error
+  }
+  buffer[valread] = '\0'; // Ensure null-termination
   Request request(buffer);
 
   std::string responseBuffer;
@@ -31,9 +38,9 @@ void handleConnection(int socket_fd, std::string dir) {
 }
 int main(int argc, char **argv) {
   std::string dir = "";
-  if (argc > 1) {
+  if (argc > 2) {
     dir = argv[2];
-    std::cout << dir;
+    // std::cout << dir;
   }
   // You can use print statements as follows for debugging, they'll be visible
   // when running tests.
