@@ -19,7 +19,10 @@ std::string Response::respond(const Request &request,
 
   // std::cout << "halala";
   if (requestLine.requestTarget == "/") {
-    return startLine + space;
+    contentType = "Content-Type: text/plain\r\n";
+    contentLength = "Content-Length:" + std::to_string(4) + space;
+    return startLine + contentType + contentLength + "Connection: close\r\n" +
+           "\r\n" + "pass";
   }
 
   if (idx != std::string::npos) {
@@ -36,7 +39,10 @@ std::string Response::respond(const Request &request,
     std::cout << fileName;
     if (!file) {
       startLine = "HTTP/1.1 404 NOT FOUND\r\n";
-      return startLine + "Connection: close";
+      contentType = "Content-Type: text/plain\r\n";
+      contentLength = "Content-Length:" + std::to_string(3) + space;
+      return startLine + contentType + contentLength + "Connection: close\r\n" +
+             "\r\n" + "err";
     }
 
     startLine = "HTTP/1.1 200 OK\r\n";
@@ -48,8 +54,11 @@ std::string Response::respond(const Request &request,
     return startLine + contentType + contentLength + "\r\n" + body;
 
   } else {
-    std::cout << "halala";
-    return "HTTP/1.1 404 NOT FOUND\r\n\r\n";
+    startLine = "HTTP/1.1 404 NOT FOUND\r\n";
+    contentType = "Content-Type: text/plain\r\n";
+    contentLength = "Content-Length:" + std::to_string(3) + space;
+    return startLine + contentType + contentLength + "Connection: close\r\n" +
+           "\r\n" + "err";
   }
 
   contentType = "Content-Type: text/plain\r\n";
