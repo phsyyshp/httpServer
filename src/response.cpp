@@ -32,6 +32,9 @@ std::string Response::respond(const Request &request,
     fileName = requestTarget;
     std::fstream file;
     file.open(dir + "/" + fileName, std::ios::in);
+    std::cout << fileName;
+    std::cout << file.is_open();
+
     if (file.is_open()) {
       startLine = "HTTP/1.1 200 OK\r\n";
       contentType = "Content-Type: application/octet-stream\r\n";
