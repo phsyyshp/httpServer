@@ -34,7 +34,10 @@ std::string Response::respond(const Request &request,
     file.open(dir + "/" + fileName);
     std::cout << fileName;
 
-    if (file) {
+    if (!file) {
+      return "HTTP/1.1 404 NOT FOUND\r\n\r\n";
+    } else {
+
       startLine = "HTTP/1.1 200 OK\r\n";
       contentType = "Content-Type: application/octet-stream\r\n";
       while (getline(file, line)) {
@@ -43,9 +46,6 @@ std::string Response::respond(const Request &request,
       contentLength = "Content-Length:" + std::to_string(body.length()) + space;
       file.close();
       return startLine + contentType + contentLength + "\r\n" + body;
-    } else {
-
-      return "HTTP/1.1 404 NOT FOUND\r\n\r\n";
     }
   } else {
     return "HTTP/1.1 404 NOT FOUND\r\n\r\n";
