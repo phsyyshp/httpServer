@@ -38,8 +38,7 @@ std::string Response::respond(const Request &request,
       while (getline(file, line)) {
         body += line;
       }
-      contentLength =
-          "Content-Length:" + std::to_string(body.length() - 2) + space;
+      contentLength = "Content-Length:" + std::to_string(body.length()) + space;
       file.close();
       return startLine + contentType + contentLength + "\r\n" + body;
     }
