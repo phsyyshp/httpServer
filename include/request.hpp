@@ -16,7 +16,7 @@ public:
   Request(const std::array<char, 1024> &buffer_) : buffer(buffer_) {}
   RequestLine getRequestLine() const;
   std::unordered_map<std::string, std::string> getHeaderHash() const;
-  std::string getBody() const;
+  std::array<char, 1024> getBody() const;
 
 private:
   std::array<char, 1024> buffer;

@@ -31,6 +31,7 @@ std::string Response::post(const Request &request,
     fileName = requestTarget;
     std::ofstream file;
     file.open(dir + "/" + fileName);
+    // std::cout << request.getBody();
     if (!file) {
       startLine = "HTTP/1.1 404 NOT FOUND\r\n";
       contentType = "Content-Type: text/plain\r\n";
@@ -41,8 +42,8 @@ std::string Response::post(const Request &request,
 
     startLine = "HTTP/1.1 201 OK\r\n";
     contentType = "Content-Type: application/octet-stream\r\n";
-
-    file << request.getBody();
+    // std::cout << request.getBody();
+    file << request.getBody().data();
     contentLength = "Content-Length:" + std::to_string(7) + space;
     return startLine + contentType + contentLength + "\r\n" + "written";
   }

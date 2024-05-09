@@ -33,8 +33,7 @@ RequestLine Request::getRequestLine() const {
   return requestLine;
 }
 
-std::string Request::getBody() const {
-  std::string body;
+std::array<char, 1024> Request::getBody() const {
 
   std::string requestLine;
   int i = 0;
@@ -60,7 +59,7 @@ std::string Request::getBody() const {
     ;
   } else {
     // Header field lines
-    for (int i = headerLinesStartIdx; i < buffer.size() - 3; i++) {
+    for (i = headerLinesStartIdx; i < buffer.size() - 3; i++) {
       char letter = buffer[i];
       if (letter == '\r' && buffer[i + 1] == '\n' && buffer[i + 2] == '\r' &&
           buffer[i + 3] == '\n') {
@@ -89,8 +88,11 @@ std::string Request::getBody() const {
     }
   }
   int bodyLineStartIdx = i + 4;
+  std::array<char, 1024> body;
+  int j = 0;
   for (int i = bodyLineStartIdx; i < buffer.size(); i++) {
-    body += buffer[i];
+    body[j] = buffer[i];
+    j++;
   }
   return body;
 }
