@@ -33,7 +33,7 @@ std::string Response::respond(const Request &request,
     std::ifstream file;
     file.open(dir + "/" + fileName);
     std::cout << fileName;
-
+    std::cout << !file;
     if (!file) {
       return "HTTP/1.1 404 NOT FOUND\r\n\r\n";
     } else {
