@@ -51,7 +51,6 @@ void Request::parse(std::array<char, 1024> &buffer) {
 
   // Step 3. Headers
 
-  std::string fieldValue;
   auto headerLineStartIT = requestLineEndIt + 2;
 
   if ((*headerLineStartIT) == '\r') {
@@ -85,6 +84,7 @@ void Request::parse(std::array<char, 1024> &buffer) {
         break;
       }
     }
+    std::string fieldValue(fieldValueStartIt, fieldValueEndIt);
     headersHash[fieldName] = fieldValue;
     headerLineStartIT = headerLineEndIT + 2;
     headerLineEndIT = std::find(headerLineStartIT, buffer.end(), '\r');
