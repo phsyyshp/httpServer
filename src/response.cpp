@@ -59,13 +59,14 @@ std::string Response::get(const Request &request,
   std::string requestTarget = requestLine.requestTarget;
 
   if (requestLine.requestTarget == "/") {
-    return statusLine(request, 200) + contentHeaders("text/plain", 0);
+    return statusLine(request, 200) + contentHeaders("text/plain", 0) + "\r\n";
   }
 
   if (requestTarget.find("/echo/", 0) != std::string::npos) {
     requestTarget.erase(requestTarget.begin(), requestTarget.begin() + 6);
     return statusLine(request, 200) +
-           contentHeaders("text/plain", requestTarget.length()) + requestTarget;
+           contentHeaders("text/plain", requestTarget.length()) + "\r\n" +
+           requestTarget;
   }
   if (requestLine.requestTarget == "/user-agent") {
     return statusLine(request, 200) +
@@ -89,7 +90,7 @@ std::string Response::get(const Request &request,
            contentHeaders("application/octet-stream", body.length()) + "\r\n" +
            body;
   } else {
-    return statusLine(request, 200) + contentHeaders("text/plain", 0);
+    return statusLine(request, 200) + contentHeaders("text/plain", 0) + "\r\n";
   }
 }
 
