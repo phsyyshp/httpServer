@@ -7,6 +7,10 @@
 
 RequestLine Request::getRequestLine() const { return requestLine; }
 std::unordered_map<std::string, std::string> Request::getHeaderHash() const {
+  for (auto [key, value] : headersHash) {
+
+    std::cout << key << " " << value << "\n";
+  }
   return headersHash;
 }
 std::array<char, 1024> Request::getBody() const { return body; }
