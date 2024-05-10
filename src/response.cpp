@@ -90,7 +90,7 @@ std::string Response::get(const Request &request,
            contentHeaders("application/octet-stream", body.length()) + "\r\n" +
            body;
   } else {
-    return statusLine(request, 200) + contentHeaders("text/plain", 0) + "\r\n";
+    return statusLine(request, 404) + contentHeaders("text/plain", 0) + "\r\n";
   }
 }
 
