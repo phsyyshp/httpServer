@@ -78,7 +78,8 @@ std::string Response::get(const Request &request,
     std::ifstream file;
     file.open(dir + "/" + requestTarget);
     if (!file) {
-      return statusLine(request, 404) + contentHeaders("text/plain", 0);
+      return statusLine(request, 404) + contentHeaders("text/plain", 0) +
+             "\r\n";
     }
     std::string line;
     while (getline(file, line)) {
