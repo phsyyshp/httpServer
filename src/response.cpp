@@ -6,49 +6,29 @@ std::string Response::respond(const Request &request,
   RequestLine requestLine = request.getRequestLine();
   if (requestLine.method == "GET") {
     return get(request, dir);
-  } else if (requestLine.method == "POST") {
+  }
+  if (requestLine.method == "POST") {
     return post(request, dir);
   }
-  return "a";
 }
 
 std::string Response::post(const Request &request,
                            const std::string &dir) const {
 
-  std::string out;
-  std::string body;
-  std::string startLine;
-  std::string contentLength;
-  std::string contentType;
   RequestLine requestLine = request.getRequestLine();
   std::string requestTarget = requestLine.requestTarget;
-  std::string space = "\r\n";
-  auto idx2 = requestLine.requestTarget.find("/files/", 0);
-  std::string fileName;
 
-  if (idx2 != std::string::npos) {
-    requestTarget.erase(requestTarget.begin() + idx2,
-                        requestTarget.begin() + 7);
-    fileName = requestTarget;
+  if (requestLine.requestTarget.find("/files/", 0) != std::string::npos) {
     std::ofstream file;
-    file.open(dir + "/" + fileName);
-    // std::cout << request.getBody();
+    file.open(dir + "/" + requestTarget.substr(7));
     if (!file) {
-      startLine = "HTTP/1.1 404 NOT FOUND\r\n";
-      contentType = "Content-Type: text/plain\r\n";
-      contentLength = "Content-Length:" + std::to_string(3) + space;
-      return startLine + contentType + contentLength + "Connection: close\r\n" +
-             "\r\n" + "err";
+      return statusLine(request, 404) + contentHeaders("text/plain", 0) +
+             "\r\n";
     }
-
-    startLine = "HTTP/1.1 201 OK\r\n";
-    contentType = "Content-Type: application/octet-stream\r\n";
-    // std::cout << request.getBody();
     file << request.getBody().data();
-    contentLength = "Content-Length:" + std::to_string(7) + space;
-    return startLine + contentType + contentLength + "\r\n" + "written";
+    return statusLine(request, 201) +
+           contentHeaders("Content-Type: application/octet-stream", 0) + "\r\n";
   }
-  return "A";
 }
 std::string Response::get(const Request &request,
                           const std::string &dir) const {
@@ -75,9 +55,8 @@ std::string Response::get(const Request &request,
            "\r\n" + request.getHeaderHash()["User-Agent"];
   }
   if (requestLine.requestTarget.find("/files/", 0) != std::string::npos) {
-    requestTarget.erase(requestTarget.begin(), requestTarget.begin() + 7);
     std::ifstream file;
-    file.open(dir + "/" + requestTarget);
+    file.open(dir + "/" + requestTarget.substr(7));
     if (!file) {
       return statusLine(request, 404) + contentHeaders("text/plain", 0) +
              "\r\n";
@@ -89,15 +68,17 @@ std::string Response::get(const Request &request,
     return statusLine(request, 200) +
            contentHeaders("application/octet-stream", body.length()) + "\r\n" +
            body;
-  } else {
-    return statusLine(request, 404) + contentHeaders("text/plain", 0) + "\r\n";
   }
+  return statusLine(request, 404) + contentHeaders("text/plain", 0) + "\r\n";
 }
 
 std::string Response::statusLine(const Request &request, int statusCode) const {
   std::string reasonPhrase;
   switch (statusCode) {
   case 200:
+    reasonPhrase = "OK";
+    break;
+  case 201:
     reasonPhrase = "OK";
     break;
   case 400:
