@@ -14,7 +14,7 @@ struct RequestLine {
 };
 class Request {
 public:
-  Request();
+  Request() = default;
   void parse(std::array<char, 1024> &buffer);
   RequestLine getRequestLine() const;
   std::unordered_map<std::string, std::string> getHeaderHash() const;
