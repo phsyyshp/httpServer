@@ -30,7 +30,7 @@ void Request::parse(std::array<char, 1024> &buffer) {
   auto requestLineEndIt = std::find(buffer.begin(), buffer.end(), '\r');
   /* RFC 9112: A recipient that receives whitespace between the start-line and
    * the first header field MUST either reject the message as invalid or ...*/
-  if (isspace(*(requestLineEndIt + 2))) {
+  if (isWhiteSpace(*(requestLineEndIt + 2))) {
     throw std::runtime_error("A sender MUST NOT send whitespace between the "
                              "start-line and the first header field.");
   }
