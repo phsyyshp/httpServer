@@ -1,164 +1,103 @@
 #include "request.hpp"
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 
-RequestLine Request::getRequestLine() const {
-  RequestLine requestLine;
-  std::string tempStr;
-  for (int i = 0; i < buffer.size() - 1; i++) {
-    char letter = buffer[i];
-    if (letter == '\r' && buffer[i + 1] == '\n') {
-      break;
-    }
-    tempStr.push_back(letter);
-  }
-  auto tokens = tokenize(tempStr);
-  int tokenNO = 0;
-  for (const auto &token : tokens) {
-    switch (tokenNO) {
-    case METHOD:
-      requestLine.method = token;
-      break;
-    case REQUEST_TARGET:
-      requestLine.requestTarget = token;
-      break;
-    case VERSION:
-      requestLine.version = token;
-      break;
-    default:
-      break;
-    }
-    tokenNO++;
-  }
-  return requestLine;
-}
+// getters
 
-std::array<char, 1024> Request::getBody() const {
-
-  std::string requestLine;
-  int i = 0;
-  for (i = 0; i < buffer.size() - 1; i++) {
-    char letter = buffer[i];
-    if (letter == '\r' && buffer[i + 1] == '\n') {
-      break;
-    }
-    requestLine.push_back(letter);
-  }
-
-  // std::string headerFieldLines;
-  std::unordered_map<std::string, std::string> headersHash;
-  int idxOfTokenOnLine = 0;
-  int lineNumber = 0;
-  std::string token;
-  std::string fieldName;
-  std::string fieldValue;
-
-  int headerLinesStartIdx = i + 2;
-  if (buffer[headerLinesStartIdx] == '\r' &&
-      buffer[headerLinesStartIdx + 1] == '\n') {
-    ;
-  } else {
-    // Header field lines
-    for (i = headerLinesStartIdx; i < buffer.size() - 3; i++) {
-      char letter = buffer[i];
-      if (letter == '\r' && buffer[i + 1] == '\n' && buffer[i + 2] == '\r' &&
-          buffer[i + 3] == '\n') {
-        break;
-      }
-      if (letter == '\r' && buffer[i + 1] == '\n') {
-        idxOfTokenOnLine = 0;
-        fieldName.pop_back(); // delete the :;
-        headersHash[fieldName] = fieldValue;
-        fieldName = "";
-        fieldValue = "";
-
-        i++; // In order to skip next '\n'
-        continue;
-      }
-
-      if (letter == ' ') {
-        idxOfTokenOnLine++;
-        continue;
-      }
-      if (idxOfTokenOnLine == 0) {
-        fieldName.push_back(letter);
-      } else {
-        fieldValue.push_back(letter);
-      }
-    }
-  }
-  int bodyLineStartIdx = i + 4;
-  std::array<char, 1024> body;
-  int j = 0;
-  for (int i = bodyLineStartIdx; i < buffer.size(); i++) {
-    body[j] = buffer[i];
-    j++;
-  }
-  return body;
-}
-
+RequestLine Request::getRequestLine() const { return requestLine; }
 std::unordered_map<std::string, std::string> Request::getHeaderHash() const {
-
-  std::string requestLine;
-  int i = 0;
-  for (i = 0; i < buffer.size() - 1; i++) {
-    char letter = buffer[i];
-    if (letter == '\r' && buffer[i + 1] == '\n') {
-      break;
-    }
-    requestLine.push_back(letter);
-  }
-
-  // std::string headerFieldLines;
-  std::unordered_map<std::string, std::string> headersHash;
-  int idxOfTokenOnLine = 0;
-  int lineNumber = 0;
-  std::string token;
-  std::string fieldName;
-  std::string fieldValue;
-
-  int headerLinesStartIdx = i + 2;
-  if (buffer[headerLinesStartIdx] == '\r' &&
-      buffer[headerLinesStartIdx + 1] == '\n') {
-    ;
-  } else {
-    // Header field lines
-    for (int i = headerLinesStartIdx; i < buffer.size() - 3; i++) {
-      char letter = buffer[i];
-      if (letter == '\r' && buffer[i + 1] == '\n' && buffer[i + 2] == '\r' &&
-          buffer[i + 3] == '\n') {
-        break;
-      }
-      if (letter == '\r' && buffer[i + 1] == '\n') {
-        idxOfTokenOnLine = 0;
-        fieldName.pop_back(); // delete the :;
-        headersHash[fieldName] = fieldValue;
-        fieldName = "";
-        fieldValue = "";
-
-        i++; // In order to skip next '\n'
-        continue;
-      }
-
-      if (letter == ' ') {
-        idxOfTokenOnLine++;
-        continue;
-      }
-      if (idxOfTokenOnLine == 0) {
-        fieldName.push_back(letter);
-      } else {
-        fieldValue.push_back(letter);
-      }
-    }
-  }
   return headersHash;
 }
-std::vector<std::string> Request::tokenize(const std::string &string) const {
-  std::stringstream stream(string);
-  std::string token;
-  std::vector<std::string> out;
-  while (stream >> token) {
-    out.push_back(token);
+std::array<char, 1024> Request::getBody() const { return body; }
+void Request::preProcess(std::array<char, 1024> &buffer) {
+  /* RFC 9112: A recipient of such a bare CR MUST consider that element to be
+  invalid or replace each bare CR with SP before processing the element or
+  forwarding the message.*/
+  for (int i = 0; i < buffer.size() - 1; i++) {
+    if ((buffer[i] == '\r') && (buffer[i + 1] != '\n')) {
+      buffer[i] = ' ';
+    }
   }
-  return out;
+}
+void Request::parse(std::array<char, 1024> &buffer) {
+
+  // Step 1.
+  preProcess(buffer);
+
+  // Step 2. Request-Line
+
+  auto requestLineEndIt = std::find(buffer.begin(), buffer.end(), '\r');
+  /* RFC 9112: A recipient that receives whitespace between the start-line and
+   * the first header field MUST either reject the message as invalid or ...*/
+  if (isspace(*(requestLineEndIt + 2))) {
+    throw std::runtime_error("A sender MUST NOT send whitespace between the "
+                             "start-line and the first header field.");
+  }
+  auto methodEndIt = std::find(buffer.begin(), requestLineEndIt, ' ');
+  auto requestTargetIt = std::find(methodEndIt + 1, requestLineEndIt, ' ');
+
+  std::string method(buffer.begin(), methodEndIt);
+  std::string requestTarget(methodEndIt + 1, requestTargetIt);
+  std::string version(requestTargetIt + 1, requestLineEndIt);
+
+  requestLine.method = method;
+  requestLine.requestTarget = requestTarget;
+  requestLine.version = version;
+
+  // Step 3. Headers
+
+  std::string fieldValue;
+  auto headerLineStartIT = requestLineEndIt + 2;
+
+  if ((*headerLineStartIT) == '\r') {
+    return;
+  }
+  auto headerLineEndIT = std::find(headerLineStartIT, buffer.end(), '\r');
+  while (true) {
+    if (*(headerLineEndIT + 2) == '\r') {
+      break;
+    }
+    auto fieldNameEndIt = std::find(headerLineStartIT, headerLineEndIT, ':');
+    if (isWhiteSpace(*(fieldNameEndIt - 1))) {
+      // TODO(): implement error
+      /*RFC 9112: No whitespace is allowed between the field name and colon.*/
+      break;
+    }
+    std::string fieldName(headerLineStartIT, fieldNameEndIt);
+    /*RFC 9112: A field line value might be preceded and/or followed by optional
+     * whitespace (OWS) */
+
+    auto fieldValueStartIt = (fieldNameEndIt + 1);
+    for (; fieldValueStartIt != headerLineEndIT; fieldValueStartIt++) {
+      if (!isWhiteSpace(*fieldValueStartIt)) {
+        break;
+      }
+    }
+
+    auto fieldValueEndIt = headerLineEndIT;
+    for (; fieldValueStartIt != fieldValueEndIt; fieldValueEndIt--) {
+      if (!isWhiteSpace(*(fieldValueEndIt - 1))) {
+        break;
+      }
+    }
+    headersHash[fieldName] = fieldValue;
+    headerLineStartIT = headerLineEndIT + 2;
+    headerLineEndIT = std::find(headerLineStartIT, buffer.end(), '\r');
+  }
+  // Step 4. Body
+  auto bodyStartIt = headerLineEndIT + 4;
+  int i = 0;
+  for (auto it = bodyStartIt; buffer.end() != it; it++) {
+    body[i] = *it;
+    i++;
+  }
+}
+
+bool Request::isWhiteSpace(char c) const {
+  /*RFC 9110 section
+  optional whitespace
+  OWS = *(SP / HTAB);
+  */
+  return (c == ' ' || c == '\t');
 }

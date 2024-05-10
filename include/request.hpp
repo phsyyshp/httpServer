@@ -13,12 +13,17 @@ struct RequestLine {
 };
 class Request {
 public:
-  Request(const std::array<char, 1024> &buffer_) : buffer(buffer_) {}
+  Request();
+  void preProcess(std::array<char, 1024> &buffer);
+  void parse(std::array<char, 1024> &buffer);
+  bool isWhiteSpace(char) const;
   RequestLine getRequestLine() const;
   std::unordered_map<std::string, std::string> getHeaderHash() const;
   std::array<char, 1024> getBody() const;
 
 private:
-  std::array<char, 1024> buffer;
-  std::vector<std::string> tokenize(const std::string &) const;
+  RequestLine requestLine;
+
+  std::unordered_map<std::string, std::string> headersHash;
+  std::array<char, 1024> body;
 };

@@ -27,7 +27,8 @@ void handleConnection(int socket_fd, std::string dir) {
     return; // Handle read error
   }
   buffer[valread] = '\0'; // Ensure null-termination
-  Request request(buffer);
+  Request request;
+  request.parse(buffer);
 
   std::string responseBuffer;
   Response response;
