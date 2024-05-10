@@ -10,6 +10,7 @@ std::string Response::respond(const Request &request,
   if (requestLine.method == "POST") {
     return post(request, dir);
   }
+  return statusLine(request, 501) + contentHeaders("text/plain", 0) + "\r\n";
 }
 
 std::string Response::post(const Request &request,
@@ -29,6 +30,7 @@ std::string Response::post(const Request &request,
     return statusLine(request, 201) +
            contentHeaders("Content-Type: application/octet-stream", 0) + "\r\n";
   }
+  return statusLine(request, 404) + contentHeaders("text/plain", 0) + "\r\n";
 }
 std::string Response::get(const Request &request,
                           const std::string &dir) const {
@@ -84,6 +86,8 @@ std::string Response::statusLine(const Request &request, int statusCode) const {
   case 400:
     reasonPhrase = "NOT FOUND";
     break;
+  case 501:
+    reasonPhrase = "NOT IMPLEMENTED";
   default:
     break;
   }
