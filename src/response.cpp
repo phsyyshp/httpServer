@@ -100,3 +100,7 @@ std::string Response::contentHeaders(const std::string contentType,
   return "Content-Type: " + contentType + "\r\n" +
          "Content-Length: " + std::to_string(contentLength) + "\r\n";
 }
+std::string Response::badRequest(const Request &request) const{
+
+  return statusLine(request, 400) + contentHeaders("text/plain", 0) + "\r\n";
+}

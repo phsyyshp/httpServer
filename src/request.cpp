@@ -21,37 +21,28 @@ void Request::preProcess(std::array<char, 1024> &buffer) {
   }
 }
 bool Request::parse(std::array<char, 1024> &buffer) {
-  bool isValid = true;
-  false;
+  bool isValid = true; // isNotBadRequest, isGoodRequest
   // Step 1.
   preProcess(buffer);
 
   // Step 2. Request-Line
-
   auto requestLineEndIt = std::find(buffer.begin(), buffer.end(), '\r');
+  if (!parseRequestLine(buffer.begin(), requestLineEndIt)) {
+    return false;
+  }
+
   /* RFC 9112: A recipient that receives whitespace between the start-line and
    * the first header field MUST either reject the message as invalid or ...*/
-  if (isWhiteSpace(*(requestLineEndIt + 2))) {
+  if (isOWS(*(requestLineEndIt + 2))) {
     throw std::runtime_error("A sender MUST NOT send whitespace between the "
                              "start-line and the first header field.");
   }
-  auto methodEndIt = std::find(buffer.begin(), requestLineEndIt, ' ');
-  auto requestTargetIt = std::find(methodEndIt + 1, requestLineEndIt, ' ');
-
-  std::string token(buffer.begin(), methodEndIt);
-  std::string requestTarget(methodEndIt + 1, requestTargetIt);
-  std::string version(requestTargetIt + 1, requestLineEndIt);
-
-  requestLine.method = token;
-  requestLine.requestTarget = requestTarget;
-  requestLine.version = version;
 
   // Step 3. Headers
-
   auto headerLineStartIT = requestLineEndIt + 2;
 
   if ((*headerLineStartIT) == '\r') {
-    return;
+    return true;
   }
   auto headerLineEndIT = std::find(headerLineStartIT, buffer.end(), '\r');
   while (true) {
@@ -59,10 +50,10 @@ bool Request::parse(std::array<char, 1024> &buffer) {
       break;
     }
     auto fieldNameEndIt = std::find(headerLineStartIT, headerLineEndIT, ':');
-    if (isWhiteSpace(*(fieldNameEndIt - 1))) {
+    if (isOWS(*(fieldNameEndIt - 1))) {
       // TODO(): implement error
       /*RFC 9112: No whitespace is allowed between the field name and colon.*/
-      break;
+      return false;
     }
     std::string fieldName(headerLineStartIT, fieldNameEndIt);
     /*RFC 9112: A field line value might be preceded and/or followed by optional
@@ -70,14 +61,14 @@ bool Request::parse(std::array<char, 1024> &buffer) {
 
     auto fieldValueStartIt = (fieldNameEndIt + 1);
     for (; fieldValueStartIt != headerLineEndIT; fieldValueStartIt++) {
-      if (!isWhiteSpace(*fieldValueStartIt)) {
+      if (!isOWS(*fieldValueStartIt)) {
         break;
       }
     }
 
     auto fieldValueEndIt = headerLineEndIT;
     for (; fieldValueStartIt != fieldValueEndIt; fieldValueEndIt--) {
-      if (!isWhiteSpace(*(fieldValueEndIt - 1))) {
+      if (!isOWS(*(fieldValueEndIt - 1))) {
         break;
       }
     }
@@ -93,13 +84,86 @@ bool Request::parse(std::array<char, 1024> &buffer) {
     body[i] = *it;
     i++;
   }
+  /*
+  RFC 9112: A server MUST respond with a 400 (Bad Request) status code to any
+  HTTP/1.1 request message that lacks a Host header field and to any request
+  message that contains more than one Host header field line or a Host header
+  field with an invalid field value.
+  */
+  // TODO(): add field value and repetitions error checks
+  if (headersHash["Host"].empty()) {
+    return false;
+  }
+
   return isValid;
 }
-
-bool Request::isWhiteSpace(char c) const {
+bool Request::isOWS(char c) const {
   /*RFC 9110 section
   optional whitespace
   OWS = *(SP / HTAB);
   */
   return (c == ' ' || c == '\t');
+}
+bool Request::isWhiteSpace(char c) const {
+  /*
+RFC 9112: such whitespace includes one or more of the
+following octets: SP, HTAB, VT (%x0B), FF (%x0C), or bare CR.;
+  */
+  return isspace(c) && (c != '\n') && (c != '\r');
+}
+
+void Request::skipPrecedingSP(
+    std::array<char, 1024>::const_iterator &it,
+    const std::array<char, 1024>::const_iterator &end) const {
+
+  for (; it != end; it++) {
+    if (*it != ' ') {
+      break;
+    }
+  }
+}
+void Request::extractToken(std::array<char, 1024>::const_iterator &start,
+                           const std::array<char, 1024>::const_iterator &end,
+                           std::string &token) const {
+  skipPrecedingSP(start, end);
+  /*RFC 9112: request-line   = method SP request-target SP HTTP-version*/
+  auto tokenEnd = std::find(start, end, ' ');
+  token.assign(start, tokenEnd);
+}
+bool Request::parseRequestLine(
+    const std::array<char, 1024>::const_iterator &lineStart,
+    const std::array<char, 1024>::const_iterator &lineEnd) {
+  /*
+  RFC 9112: Although the request-line grammar rule requires that each of the
+  component elements be separated by a single SP octet, recipients MAY instead
+  parse on whitespace-delimited word boundaries and, aside from the CRLF
+  terminator, treat any form of whitespace as the SP separator while ignoring
+  preceding or trailing whitespace such whitespace includes one or more of the
+  following octets: SP, HTAB, VT (%x0B), FF (%x0C), or bare CR.;
+  */
+  auto tokenStart = lineStart;
+  std::replace_if(tokenStart, lineEnd, &Request::isWhiteSpace, ' ');
+  std::string method;
+  std::string requestTarget;
+  std::string version;
+  extractToken(tokenStart, lineEnd, method);
+  extractToken(tokenStart, lineEnd, requestTarget);
+  extractToken(tokenStart, lineEnd, version);
+  /*
+  RFC 9112:
+  Recipients of an invalid request-line SHOULD respond with either a 400 (Bad
+  Request) error or a 301 (Moved Permanently) redirect with the request-target
+  properly encoded.
+  No whitespace is allowed in the request-target.
+  */
+  auto versionEndIt = std::find(tokenStart, lineEnd, ' ');
+  for (auto it = versionEndIt + 1; it != lineEnd; it++) {
+    if (!isspace(*it)) {
+      return false;
+    }
+  }
+  requestLine.method = method;
+  requestLine.requestTarget = requestTarget;
+  requestLine.version = version;
+  return true;
 }

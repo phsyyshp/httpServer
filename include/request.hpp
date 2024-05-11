@@ -17,12 +17,21 @@ public:
   Request() = default;
   bool parse(std::array<char, 1024> &buffer);
   RequestLine getRequestLine() const;
+
   std::unordered_map<std::string, std::string> getHeaderHash() const;
   std::array<char, 1024> getBody() const;
 
 private:
-  bool isWhiteSpace(char) const;
+  bool parseRequestLine(const std::array<char, 1024>::const_iterator &lineStart,
+                        const std::array<char, 1024>::const_iterator &lineEnd);
+  void extractToken(std::array<char, 1024>::const_iterator &start,
+                    const std::array<char, 1024>::const_iterator &end,
+                    std::string &token) const;
+  bool isOWS(char) const;
+  bool isWhiteSpace(char c) const;
   void preProcess(std::array<char, 1024> &buffer);
+  void skipPrecedingSP(std::array<char, 1024>::const_iterator &it,
+                       const std::array<char, 1024>::const_iterator &end) const;
   RequestLine requestLine;
   std::unordered_map<std::string, std::string> headersHash;
   std::array<char, 1024> body;

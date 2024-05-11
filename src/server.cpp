@@ -35,7 +35,7 @@ void handleConnection(int socket_fd, std::string dir) {
 
     responseBuffer = response.respond(request, dir);
   } else {
-    responseBuffer = response.badRerquest();
+    responseBuffer = response.badRequest(request);
   }
 
   // std::cout << responseBuffer;
@@ -72,6 +72,8 @@ int main(int argc, char **argv) {
   struct sockaddr_in server_addr;
   server_addr.sin_family = AF_INET;
   server_addr.sin_addr.s_addr = INADDR_ANY;
+  server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
   server_addr.sin_port = htons(4221);
 
   if (bind(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) !=
