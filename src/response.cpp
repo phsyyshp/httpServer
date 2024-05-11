@@ -27,14 +27,22 @@ std::string Response::post(const Request &request,
     std::ofstream file;
     file.open(dir + "/" + requestTarget.substr(7));
     if (!file) {
-      return statusLine(request, 404) + contentHeaders("text/plain", 0) +
-             "\r\n";
+
+      ContentMetaData cmd;
+      cmd.length = "0";
+      cmd.type = "text/plain";
+      return statusLine(request, 404) + contentHeaders(cmd) + "\r\n";
     }
     file << request.getBody().data();
-    return statusLine(request, 201) +
-           contentHeaders("Content-Type: application/octet-stream", 0) + "\r\n";
+    ContentMetaData cmd;
+    cmd.length = "0";
+    cmd.type = "application/octet-stream";
+    return statusLine(request, 201) + contentHeaders(cmd) + "\r\n";
   }
-  return statusLine(request, 404) + contentHeaders("text/plain", 0) + "\r\n";
+  ContentMetaData cmd;
+  cmd.length = "0";
+  cmd.type = "text/plain";
+  return statusLine(request, 404) + contentHeaders(cmd) + "\r\n";
 }
 std::string Response::get(const Request &request,
                           const std::string &dir) const {
