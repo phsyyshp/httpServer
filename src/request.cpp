@@ -1,4 +1,5 @@
 #include "request.hpp"
+#include <cctype>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -26,7 +27,16 @@ bool Request::parse(std::array<char, 1024> &buffer) {
   preProcess(buffer);
 
   // Step 2. Request-Line
+  /*
+  RFC 9112: Although the request-line grammar rule requires that each of the
+  component elements be separated by a single SP octet, recipients MAY instead
+  parse on whitespace-delimited word boundaries and, aside from the CRLF
+  terminator, treat any form of whitespace as the SP separator while ignoring
+  preceding or trailing whitespace such whitespace includes one or more of the
+  following octets: SP, HTAB, VT (%x0B), FF (%x0C), or bare CR.;
+  */
   auto requestLineEndIt = std::find(buffer.begin(), buffer.end(), '\r');
+  std::replace_if(buffer.begin(), requestLineEndIt, isWhiteSpace, ' ');
   if (!parseRequestLine(buffer.begin(), requestLineEndIt)) {
     return false;
   }
@@ -97,20 +107,6 @@ bool Request::parse(std::array<char, 1024> &buffer) {
 
   return isValid;
 }
-bool Request::isOWS(char c) const {
-  /*RFC 9110 section
-  optional whitespace
-  OWS = *(SP / HTAB);
-  */
-  return (c == ' ' || c == '\t');
-}
-bool Request::isWhiteSpace(char c) const {
-  /*
-RFC 9112: such whitespace includes one or more of the
-following octets: SP, HTAB, VT (%x0B), FF (%x0C), or bare CR.;
-  */
-  return isspace(c) && (c != '\n') && (c != '\r');
-}
 
 void Request::skipPrecedingSP(
     std::array<char, 1024>::const_iterator &it,
@@ -133,21 +129,18 @@ void Request::extractToken(std::array<char, 1024>::const_iterator &start,
 bool Request::parseRequestLine(
     const std::array<char, 1024>::const_iterator &lineStart,
     const std::array<char, 1024>::const_iterator &lineEnd) {
-  /*
-  RFC 9112: Although the request-line grammar rule requires that each of the
-  component elements be separated by a single SP octet, recipients MAY instead
-  parse on whitespace-delimited word boundaries and, aside from the CRLF
-  terminator, treat any form of whitespace as the SP separator while ignoring
-  preceding or trailing whitespace such whitespace includes one or more of the
-  following octets: SP, HTAB, VT (%x0B), FF (%x0C), or bare CR.;
-  */
+
   auto tokenStart = lineStart;
-  std::replace_if(tokenStart, lineEnd, &Request::isWhiteSpace, ' ');
   std::string method;
   std::string requestTarget;
   std::string version;
   extractToken(tokenStart, lineEnd, method);
   extractToken(tokenStart, lineEnd, requestTarget);
+
+  if (!isRequestTargetValid(requestTarget)) {
+    return false;
+  }
+
   extractToken(tokenStart, lineEnd, version);
   /*
   RFC 9112:
@@ -166,4 +159,66 @@ bool Request::parseRequestLine(
   requestLine.requestTarget = requestTarget;
   requestLine.version = version;
   return true;
+}
+
+bool Request::isRequestTargetValid(const std::string &requestTarget) const {
+  /*
+  RFC:9122
+  request-target = origin-form
+  RFC: 9110, 9112, 3986
+  origin-form    = absolute-path [ "?" query ]
+  absolute-path = 1*( "/" segment )
+  segment       = *pchar
+  query       = *( pchar / "/" / "?" )
+  */
+  if (*requestTarget.begin() != '/') {
+    return false;
+  }
+  auto absolutePathEndIt =
+      std::find(requestTarget.begin(), requestTarget.end(), '?');
+  if (std::find_if(requestTarget.begin() + 1, absolutePathEndIt, isPchar) !=
+      absolutePathEndIt) {
+    return false;
+  }
+  // TODO: parse Query
+}
+bool isPchar(char c) {
+  // RFC: 3986
+  // pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
+  return isUnreserved(c) || isPctEncoded(c) || isSubDelims(c) || (c == ':') ||
+         (c == '@');
+}
+bool isUnreserved(char c) {
+  // RFC: 3986
+  // unreserved  = ALPHA / DIGIT / "-" / "." / "_" / "~"
+  return std::isalpha(c) || std::isdigit(c) || (c == '-') || (c == '.') ||
+         (c == '_') || (c == '~');
+}
+// FIX IT: HEXDIG
+bool isPctEncoded(char c) {
+  // RFC: 3986
+  // pct-encoded = "%" HEXDIG HEXDIG
+  return c == '%';
+}
+bool isSubDelims(char c) {
+  // RFC: 3986
+  // sub-delims  = "!" / "$" / "&" / "'" / "(" / ")"
+  // / "*" / "+" / "," / ";" / "="
+  return (c == '!') || (c == '$') || (c == '&') || (c == '\'') || (c == '(') ||
+         (c == ')') || (c == '*') || (c == '+') || (c == ',') || (c == ';') ||
+         (c == '=');
+}
+bool isOWS(char c) {
+  /*RFC 9110 section
+  optional whitespace
+  OWS = *(SP / HTAB);
+  */
+  return (c == ' ' || c == '\t');
+}
+bool isWhiteSpace(char c) {
+  /*
+RFC 9112: such whitespace includes one or more of the
+following octets: SP, HTAB, VT (%x0B), FF (%x0C), or bare CR.;
+  */
+  return isspace(c) && (c != '\n') && (c != '\r');
 }

@@ -12,6 +12,13 @@ struct RequestLine {
   std::string requestTarget;
   std::string version;
 };
+bool isOWS(char c);
+bool isWhiteSpace(char c);
+bool isUnreserved(char c);
+bool isPctEncoded(char c);
+bool isSubDelims(char c);
+bool isPchar(char c);
+
 class Request {
 public:
   Request() = default;
@@ -27,8 +34,7 @@ private:
   void extractToken(std::array<char, 1024>::const_iterator &start,
                     const std::array<char, 1024>::const_iterator &end,
                     std::string &token) const;
-  bool isOWS(char) const;
-  bool isWhiteSpace(char c) const;
+  bool isRequestTargetValid(const std::string &) const;
   void preProcess(std::array<char, 1024> &buffer);
   void skipPrecedingSP(std::array<char, 1024>::const_iterator &it,
                        const std::array<char, 1024>::const_iterator &end) const;
