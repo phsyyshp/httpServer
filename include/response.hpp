@@ -1,5 +1,7 @@
 #pragma once
 #include "request.hpp"
+#include <cstdlib>
+#include <memory>
 struct ContentMetaData {
   std::string type;
   std::string encoding;
