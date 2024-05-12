@@ -57,6 +57,7 @@ bool Request::parse(std::array<char, 1024> &buffer) {
   }
   auto headerLineEndIT = std::find(headerLineStartIT, buffer.end(), '\r');
   while (true) {
+    std::cout << "lala\n";
     if (*(headerLineEndIT + 2) == '\r') {
       break;
     }
