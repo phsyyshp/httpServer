@@ -47,7 +47,6 @@ std::string Response::post(const Request &request,
 std::string Response::get(const Request &request,
                           const std::string &dir) const {
 
-  std::string body;
   std::string contentHeader;
   RequestLine requestLine = request.getRequestLine();
   std::string requestTarget = requestLine.requestTarget;
@@ -58,7 +57,7 @@ std::string Response::get(const Request &request,
     cmd.type = "text/plain";
     return statusLine(request, 200) + contentHeaders(cmd) + "\r\n";
   }
-
+  std::string body;
   if (requestTarget.find("/echo/", 0) != std::string::npos) {
     requestTarget.erase(requestTarget.begin(), requestTarget.begin() + 6);
     ContentMetaData cmd;
@@ -78,7 +77,6 @@ std::string Response::get(const Request &request,
       std::string gzipFileName = "temp.txt.gz";
       command = "gzip -c -d " + gzipFileName;
       std::array<char, 128> buffer;
-      std::string body;
       std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "r"),
                                                     pclose);
       if (!pipe) {
@@ -87,10 +85,9 @@ std::string Response::get(const Request &request,
 
       while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
         body += buffer.data();
-        // std::cout << body << "\n";
+        std::cout << body << "\n";
       }
-      return "lala\n";
-      // return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" + body;
+      return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" + body;
     }
     return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" +
            requestTarget;
