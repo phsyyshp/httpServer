@@ -65,7 +65,7 @@ bool Request::parse(std::array<char, 1024> &buffer) {
       // TODO(): implement error
       /*RFC 9112: No whitespace is allowed between the field name and colon.*/
 
-      std::cout << 10;
+      std::cout << 17;
       return false;
     }
     std::string fieldName(headerLineStartIT, fieldNameEndIt);
@@ -180,6 +180,7 @@ bool Request::isRequestTargetValid(const std::string &requestTarget) const {
   query       = *( pchar / "/" / "?" )
   */
   if (*requestTarget.begin() != '/') {
+    std::cout << requestTarget;
     std::cout << 3;
     return false;
   }
