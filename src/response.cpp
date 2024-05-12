@@ -72,22 +72,16 @@ std::string Response::get(const Request &request,
       std::string tempFileName = "temp.txt";
       std::string command = echo + "'" + requestTarget + "' > temp.txt";
       system(command.c_str());
-      command = "gzip " + tempFileName;
-      system(command.c_str());
-      std::string gzipFileName = "temp.txt.gz";
-      command = "gzip -c -d " + gzipFileName;
-      std::array<char, 128> buffer;
-      std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "r"),
-                                                    pclose);
-      if (!pipe) {
-        throw std::runtime_error("Failed to open pipe");
-      }
+      std::string gzipFileName = "gzip " + tempFileName;
+      std::ifstream file(gzipFileName, std::ios::binary);
+      std::vector<char> buffer(std::istreambuf_iterator<char>(file), {});
 
-      while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-        body += buffer.data();
-        std::cout << body << "\n";
-        return body;
-      }
+      std::string body(buffer.begin(), buffer.end());
+
+      std::cout << "Compressed data size: " << body.size() << " bytes"
+                << std::endl;
+
+      std::remove(gzipFileName.c_str());
       return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" + body;
     }
     return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" +
