@@ -155,8 +155,9 @@ bool Request::parseRequestLine(
   properly encoded.
   No whitespace is allowed in the request-target.
   */
-  std::cout << tokenStart << '\n';
-  std::cout << lineEnd << '\n';
+  std::cout << version << '\n';
+  // std::cout << tokenStart << '\n';
+  // std::cout << lineEnd << '\n';
   std::cout << "la\n";
   auto versionEndIt = std::find(tokenStart - 1, lineEnd, ' ');
   // std::cout << versionEndIt << "\n";
