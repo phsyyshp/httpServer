@@ -70,7 +70,6 @@ std::string Response::get(const Request &request,
     //   std::cout << key << value << '\n';
     // }
     if (request.getHeaderHash()["Accept-Encoding"] == "gzip") {
-      std::cout << "lala2\n";
       cmd.encoding = "gzip";
     }
     return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" +
@@ -141,10 +140,10 @@ Response::contentHeaders(const ContentMetaData &contentMetaData) const {
   if (!contentMetaData.length.empty()) {
     out = "Content-Length: " + contentMetaData.length + "\r\n";
   }
-  if (!contentMetaData.encoding.empty()) {
+  if (!contentMetaData.language.empty()) {
     out = "Content-Language: " + contentMetaData.language + "\r\n";
   }
-  if (!contentMetaData.encoding.empty()) {
+  if (!contentMetaData.location.empty()) {
     out = "Content-Location: " + contentMetaData.location + "\r\n";
   }
 
