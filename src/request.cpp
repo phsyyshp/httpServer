@@ -139,14 +139,11 @@ bool Request::parseRequestLine(
   std::string method;
   std::string requestTarget;
   std::string version;
-  std::cout << "lsls";
   extractToken(tokenStart, lineEnd, method);
-  std::cout << method;
+  std::cout << method << '\n';
 
-  std::cout << "lsls";
   extractToken(tokenStart, lineEnd, requestTarget);
 
-  std::cout << requestTarget;
   if (!isRequestTargetValid(requestTarget)) {
 
     std::cout << 1;
@@ -163,7 +160,6 @@ bool Request::parseRequestLine(
   No whitespace is allowed in the request-target.
   */
   auto versionEndIt = std::find(tokenStart, lineEnd, ' ');
-  std::cout << *versionEndIt;
   for (auto it = versionEndIt + 1; it != lineEnd; it++) {
     if (!isspace(*it)) {
       std::cout << *it;
