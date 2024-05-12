@@ -87,6 +87,7 @@ bool Request::parse(std::array<char, 1024> &buffer) {
     }
     std::string fieldValue(fieldValueStartIt, fieldValueEndIt);
     headersHash[fieldName] = fieldValue;
+    std::cout << fieldName << " " << fieldValue << '\n';
     headerLineStartIT = headerLineEndIT + 2;
     headerLineEndIT = std::find(headerLineStartIT, buffer.end(), '\r');
   }

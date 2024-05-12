@@ -66,9 +66,9 @@ std::string Response::get(const Request &request,
     cmd.length = std::to_string(requestTarget.length());
     cmd.type = "text/plain";
     std::cout << request.getHeaderHash()["Accept-Encoding"];
-    for (auto [key, value] : request.getHeaderHash()) {
-      std::cout << key << value << '\n';
-    }
+    // for (auto [key, value] : request.getHeaderHash()) {
+    //   std::cout << key << value << '\n';
+    // }
     if (request.getHeaderHash()["Accept-Encoding"] == "gzip") {
       std::cout << "lala2\n";
       cmd.encoding = "gzip";
