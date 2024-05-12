@@ -116,6 +116,8 @@ std::string Response::statusLine(const Request &request, int statusCode) const {
   case 400:
     reasonPhrase = "BAD REQUEST";
     break;
+  case 404:
+    reasonPhrase = "Not Found";
   case 501:
     reasonPhrase = "NOT IMPLEMENTED";
   default:
