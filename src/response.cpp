@@ -70,6 +70,7 @@ std::string Response::get(const Request &request,
     //   std::cout << key << value << '\n';
     // }
     if (request.getHeaderHash()["Accept-Encoding"] == "gzip") {
+      std::cout << "calisio\n";
       cmd.encoding = "gzip";
     }
     return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" +
