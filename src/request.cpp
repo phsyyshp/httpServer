@@ -141,6 +141,8 @@ bool Request::parseRequestLine(
   std::string version;
   extractToken(tokenStart, lineEnd, method);
   std::cout << method;
+
+  std::cout << "lsls";
   extractToken(tokenStart, lineEnd, requestTarget);
 
   std::cout << requestTarget;
