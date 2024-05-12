@@ -74,9 +74,9 @@ std::string Response::get(const Request &request,
       system(command.c_str());
       std::string gzipFileName = "gzip " + tempFileName;
       std::ifstream file(gzipFileName, std::ios::binary);
-      std::vector<char> buffer(std::istreambuf_iterator<char>(file), {});
+      std::vector<char> buffers(std::istreambuf_iterator<char>(file), {});
 
-      std::string body(buffer.begin(), buffer.end());
+      std::string body(buffers.begin(), buffers.end());
 
       // std::cout << "Compressed data size: " << body.size() << " bytes"
       //           << std::endl;
