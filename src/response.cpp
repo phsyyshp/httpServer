@@ -78,8 +78,8 @@ std::string Response::get(const Request &request,
 
       std::string body(buffer.begin(), buffer.end());
 
-      std::cout << "Compressed data size: " << body.size() << " bytes"
-                << std::endl;
+      // std::cout << "Compressed data size: " << body.size() << " bytes"
+      //           << std::endl;
 
       std::remove(gzipFileName.c_str());
       return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" + body;
