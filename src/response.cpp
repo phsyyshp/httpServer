@@ -118,6 +118,7 @@ std::string Response::statusLine(const Request &request, int statusCode) const {
     break;
   case 404:
     reasonPhrase = "Not Found";
+    break;
   case 501:
     reasonPhrase = "NOT IMPLEMENTED";
   default:
