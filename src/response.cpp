@@ -120,7 +120,8 @@ std::string Response::get(const Request &request,
       cmd.length = std::to_string(body.length()); // Set the content length
 
       // Construct the HTTP response
-      return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" + body;
+      return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" +
+             requestTarget;
     }
     return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" +
            requestTarget;
