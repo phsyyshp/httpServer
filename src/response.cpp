@@ -71,10 +71,6 @@ std::string Response::get(const Request &request,
         std::string::npos) {
       cmd.encoding = "gzip";
 
-      // Prepare input data
-      std::string requestTarget =
-          "your data here"; // Ensure this is initialized appropriately
-
       // Initialize zlib structures
       z_stream zs; // z_stream is zlib's control structure
       memset(&zs, 0, sizeof(zs));
@@ -106,9 +102,9 @@ std::string Response::get(const Request &request,
         }
       } while (ret == Z_OK);
 
-      deflateEnd(&zs); // Clean up
+      deflateEnd(&zs);
 
-      if (ret != Z_STREAM_END) { // Check if the compression was successful
+      if (ret != Z_STREAM_END) {
         std::ostringstream oss;
         oss << "Exception during zlib compression: (" << ret << ") " << zs.msg;
         throw(std::runtime_error(oss.str()));
@@ -120,8 +116,7 @@ std::string Response::get(const Request &request,
       cmd.length = std::to_string(body.length()); // Set the content length
 
       // Construct the HTTP response
-      return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" +
-             requestTarget;
+      return statusLine(request, 200) + contentHeaders(cmd) + "\r\n/n" + body;
     }
     return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" +
            requestTarget;
