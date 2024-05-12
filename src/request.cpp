@@ -154,6 +154,7 @@ bool Request::parseRequestLine(
   version.assign(tokenStart, tokenEnd);
   std::cout << version << "\n";
   std::cout << tokenStart << "\n";
+  std::cout << "lala\n";
   /*
   RFC 9112:
   Recipients of an invalid request-line SHOULD respond with either a 400 (Bad
