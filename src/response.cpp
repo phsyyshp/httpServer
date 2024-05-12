@@ -89,6 +89,7 @@ std::string Response::get(const Request &request,
 
       while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
         body += buffer.data();
+        std::cout << body << "\n";
       }
       return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" + body;
     }
