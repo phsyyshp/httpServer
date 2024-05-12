@@ -159,7 +159,7 @@ bool Request::parseRequestLine(
   auto versionEndIt = std::find(tokenStart, lineEnd, ' ');
   for (auto it = versionEndIt + 1; it != lineEnd; it++) {
     if (!isspace(*it)) {
-
+      std::cout << *it;
       std::cout << 2;
       return false;
     }
