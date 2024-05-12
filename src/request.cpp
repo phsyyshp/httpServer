@@ -157,7 +157,7 @@ bool Request::parseRequestLine(
   No whitespace is allowed in the request-target.
   */
   auto versionEndIt = std::find(tokenStart, lineEnd, ' ');
-  std::cout << versionEndIt << "\n";
+  // std::cout << versionEndIt << "\n";
   for (auto it = versionEndIt + 1; it != lineEnd; it++) {
     if (!isspace(*it)) {
       std::cout << *it;
