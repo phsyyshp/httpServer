@@ -69,7 +69,6 @@ std::string Response::get(const Request &request,
     if (request.getHeaderHash()["Accept-Encoding"].find("gzip") !=
         std::string::npos) {
       cmd.encoding = "gzip";
-
       std::string echo = "echo ";
       std::string tempFileName = "temp.txt";
       std::string command = echo + "'" + requestTarget + "' > temp.txt";
@@ -82,16 +81,16 @@ std::string Response::get(const Request &request,
       std::string body;
       std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "r"),
                                                     pclose);
-
       if (!pipe) {
         throw std::runtime_error("Failed to open pipe");
       }
 
       while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
         body += buffer.data();
-        std::cout << body << "\n";
+        // std::cout << body << "\n";
       }
-      return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" + body;
+      return "lala\n";
+      // return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" + body;
     }
     return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" +
            requestTarget;
