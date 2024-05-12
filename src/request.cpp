@@ -58,9 +58,6 @@ bool Request::parse(std::array<char, 1024> &buffer) {
   auto headerLineEndIT = std::find(headerLineStartIT, buffer.end(), '\r');
   while (true) {
     std::cout << "lala\n";
-    if (*(headerLineEndIT + 2) == '\r') {
-      break;
-    }
     auto fieldNameEndIt = std::find(headerLineStartIT, headerLineEndIT, ':');
     if (isOWS(*(fieldNameEndIt - 1))) {
       // TODO(): implement error
@@ -89,6 +86,9 @@ bool Request::parse(std::array<char, 1024> &buffer) {
     std::string fieldValue(fieldValueStartIt, fieldValueEndIt);
     headersHash[fieldName] = fieldValue;
     std::cout << fieldName << " " << fieldValue << '\n';
+    if (*(headerLineEndIT + 2) == '\r') {
+      break;
+    }
     headerLineStartIT = headerLineEndIT + 2;
     headerLineEndIT = std::find(headerLineStartIT, buffer.end(), '\r');
   }
