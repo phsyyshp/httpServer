@@ -132,20 +132,20 @@ std::string
 Response::contentHeaders(const ContentMetaData &contentMetaData) const {
   std::string out;
   if (!contentMetaData.encoding.empty()) {
-    out = "Content-Enconding: " + contentMetaData.encoding + "\r\n";
+    out += "Content-Enconding: " + contentMetaData.encoding + "\r\n";
   }
 
   if (!contentMetaData.type.empty()) {
-    out = "Content-Type: " + contentMetaData.type + "\r\n";
+    out += "Content-Type: " + contentMetaData.type + "\r\n";
   }
   if (!contentMetaData.length.empty()) {
-    out = "Content-Length: " + contentMetaData.length + "\r\n";
+    out += "Content-Length: " + contentMetaData.length + "\r\n";
   }
   if (!contentMetaData.language.empty()) {
-    out = "Content-Language: " + contentMetaData.language + "\r\n";
+    out += "Content-Language: " + contentMetaData.language + "\r\n";
   }
   if (!contentMetaData.location.empty()) {
-    out = "Content-Location: " + contentMetaData.location + "\r\n";
+    out += "Content-Location: " + contentMetaData.location + "\r\n";
   }
 
   return out;
