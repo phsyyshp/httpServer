@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
   struct sockaddr_in server_addr;
   server_addr.sin_family = AF_INET;
   server_addr.sin_addr.s_addr = INADDR_ANY;
-  server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+  // server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
   server_addr.sin_port = htons(4221);
 
@@ -95,22 +95,22 @@ int main(int argc, char **argv) {
   int client_addr_len = sizeof(client_addr);
   int socket_fd;
   std::vector<std::thread> threads;
-  while (true) {
-    socket_fd = accept(server_fd, (struct sockaddr *)&client_addr,
-                       (socklen_t *)&client_addr_len);
-    if (socket_fd < 0) {
-      std::cerr << "Failed to accept connection\n";
-      continue;
-    }
-    // handleConnection(socket_fd, dir);
-    threads.emplace_back(handleConnection, socket_fd, dir);
+  // while (true) {
+  socket_fd = accept(server_fd, (struct sockaddr *)&client_addr,
+                     (socklen_t *)&client_addr_len);
+  if (socket_fd < 0) {
+    std::cerr << "Failed to accept connection\n";
+    // continue;
   }
+  handleConnection(socket_fd, dir);
+  // threads.emplace_back(handleConnection, socket_fd, dir);
+  // }
 
-  for (auto &t : threads) {
-    if (t.joinable()) {
-      t.join();
-    }
-  }
+  // for (auto &t : threads) {
+  //   if (t.joinable()) {
+  //     t.join();
+  //   }
+  // }
   close(server_fd);
   // std::cout << "lalal";
   return 0;
