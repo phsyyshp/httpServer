@@ -189,6 +189,8 @@ bool Request::isRequestTargetValid(const std::string &requestTarget) const {
       std::find(requestTarget.begin(), requestTarget.end(), '?');
   if (std::find_if(requestTarget.begin() + 1, absolutePathEndIt, isNotPchar) !=
       absolutePathEndIt) {
+    std::cout << *std::find_if(requestTarget.begin() + 1, absolutePathEndIt,
+                               isNotPchar);
     std::cout << 4;
     return false;
   }
