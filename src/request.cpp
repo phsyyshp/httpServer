@@ -153,7 +153,7 @@ bool Request::parseRequestLine(
   auto tokenEnd = std::find(tokenStart, lineEnd, ' ');
   version.assign(tokenStart, tokenEnd);
   std::cout << version << "\n";
-  std::cout << tokenStart << "\n";
+  std::cout << *tokenStart << "\n";
   std::cout << "lala\n";
   /*
   RFC 9112:
