@@ -72,7 +72,8 @@ std::string Response::get(const Request &request,
       std::string tempFileName = "temp.txt";
       std::string command = echo + "'" + requestTarget + "' > temp.txt";
       system(command.c_str());
-      std::string gzipFileName = "gzip " + tempFileName;
+      std::string gzipFileName = "temp.txt.gz";
+      command = "gzip " + tempFileName;
       std::ifstream file(gzipFileName, std::ios::binary);
       std::vector<char> buffers(std::istreambuf_iterator<char>(file), {});
 
