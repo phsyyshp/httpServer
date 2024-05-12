@@ -152,6 +152,7 @@ bool Request::parseRequestLine(
   skipPrecedingSP(tokenStart, lineEnd);
   auto tokenEnd = std::find(tokenStart, lineEnd, ' ');
   version.assign(tokenStart, tokenEnd);
+  std::cout << version << "\n";
   std::cout << tokenStart << "\n";
   /*
   RFC 9112:
