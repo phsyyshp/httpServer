@@ -18,7 +18,7 @@ bool isUnreserved(char c);
 bool isPctEncoded(char c);
 bool isSubDelims(char c);
 bool isPchar(char c);
-
+bool isNotPchar(char c);
 class Request {
 public:
   Request() = default;

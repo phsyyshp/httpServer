@@ -187,13 +187,19 @@ bool Request::isRequestTargetValid(const std::string &requestTarget) const {
   }
   auto absolutePathEndIt =
       std::find(requestTarget.begin(), requestTarget.end(), '?');
-  if (std::find_if(requestTarget.begin() + 1, absolutePathEndIt, isPchar) !=
+  if (std::find_if(requestTarget.begin() + 1, absolutePathEndIt, isNotPchar) !=
       absolutePathEndIt) {
     std::cout << 4;
     return false;
   }
   // TODO: parse Query
   return true;
+}
+
+bool isNotPchar(char c) {
+  // RFC: 3986
+  // pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
+  return !isPchar(c);
 }
 bool isPchar(char c) {
   // RFC: 3986
