@@ -111,7 +111,7 @@ std::string Response::statusLine(const Request &request, int statusCode) const {
     reasonPhrase = "OK";
     break;
   case 201:
-    reasonPhrase = "CREATED";
+    reasonPhrase = "Created";
     break;
   case 400:
     reasonPhrase = "BAD REQUEST";
