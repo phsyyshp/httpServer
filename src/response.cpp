@@ -1,5 +1,7 @@
 #include "response.hpp"
+#include <cstring>
 #include <string>
+#include <zlib.h>
 std::string Response::respond(const Request &request,
                               const std::string &dir) const {
 
@@ -68,22 +70,56 @@ std::string Response::get(const Request &request,
     if (request.getHeaderHash()["Accept-Encoding"].find("gzip") !=
         std::string::npos) {
       cmd.encoding = "gzip";
-      std::string echo = "echo ";
-      std::string tempFileName = "temp.txt";
-      std::string command = echo + "'" + requestTarget + "' > temp.txt";
-      system(command.c_str());
-      std::string gzipFileName = "temp.txt.gz";
-      command = "gzip " + tempFileName;
-      std::ifstream file(gzipFileName, std::ios::binary);
-      std::vector<char> buffers(std::istreambuf_iterator<char>(file), {});
 
-      std::string body(buffers.begin(), buffers.end());
+      // Prepare input data
+      std::string requestTarget =
+          "your data here"; // Ensure this is initialized appropriately
 
-      // std::cout << "Compressed data size: " << body.size() << " bytes"
-      //           << std::endl;
-      cmd.length = std::to_string(body.length());
+      // Initialize zlib structures
+      z_stream zs; // z_stream is zlib's control structure
+      memset(&zs, 0, sizeof(zs));
 
-      std::remove(gzipFileName.c_str());
+      if (deflateInit2(&zs, Z_BEST_COMPRESSION, Z_DEFLATED, MAX_WBITS + 16, 8,
+                       Z_DEFAULT_STRATEGY) != Z_OK) {
+        throw(std::runtime_error("Failed to initialize zlib."));
+      }
+
+      zs.next_in =
+          reinterpret_cast<Bytef *>(const_cast<char *>(requestTarget.data()));
+      zs.avail_in = requestTarget.size(); // Set the z_stream's input
+
+      int ret;
+      char outbuffer[32768];
+      std::vector<char> compressedData;
+
+      // Compress the data into the buffer
+      do {
+        zs.next_out = reinterpret_cast<Bytef *>(outbuffer);
+        zs.avail_out = sizeof(outbuffer);
+
+        ret = deflate(&zs, Z_FINISH); // Finish compression
+
+        if (compressedData.size() < zs.total_out) {
+          compressedData.insert(compressedData.end(), outbuffer,
+                                outbuffer + zs.total_out -
+                                    compressedData.size());
+        }
+      } while (ret == Z_OK);
+
+      deflateEnd(&zs); // Clean up
+
+      if (ret != Z_STREAM_END) { // Check if the compression was successful
+        std::ostringstream oss;
+        oss << "Exception during zlib compression: (" << ret << ") " << zs.msg;
+        throw(std::runtime_error(oss.str()));
+      }
+
+      // Convert the compressed data into a std::string
+      std::string body(compressedData.begin(), compressedData.end());
+
+      cmd.length = std::to_string(body.length()); // Set the content length
+
+      // Construct the HTTP response
       return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" + body;
     }
     return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" +

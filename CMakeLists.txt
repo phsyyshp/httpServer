@@ -1,13 +1,12 @@
 cmake_minimum_required(VERSION 3.13)
 project(http-server-starter-cpp)
-set(CMAKE_CXX_STANDARD 20) # Enable the C++20 standard
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(INCLUDE_DIR include)
 
-set(SOURCE_FILES src/server.cpp
-src/response.cpp
-src/request.cpp)
+set(SOURCE_FILES src/server.cpp src/response.cpp src/request.cpp)
 
+find_package(ZLIB REQUIRED)
 add_executable(server ${SOURCE_FILES})
-target_include_directories(server PRIVATE ${INCLUDE_DIR})
-target_link_libraries(server pthread)
+target_include_directories(server PRIVATE ${INCLUDE_DIR} ${ZLIB_INCLUDE_DIRS})
+target_link_libraries(server pthread ${ZLIB_LIBRARIES})
