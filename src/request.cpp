@@ -129,6 +129,7 @@ void Request::extractToken(std::array<char, 1024>::const_iterator &start,
   /*RFC 9112: request-line   = method SP request-target SP HTTP-version*/
   auto tokenEnd = std::find(start, end, ' ');
   token.assign(start, tokenEnd);
+  start = tokenEnd + 1;
 }
 bool Request::parseRequestLine(
     const std::array<char, 1024>::const_iterator &lineStart,
