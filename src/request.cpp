@@ -147,7 +147,6 @@ bool Request::parseRequestLine(
     std::cout << 1;
     return false;
   }
-
   extractToken(tokenStart, lineEnd, version);
   /*
   RFC 9112:
@@ -156,7 +155,7 @@ bool Request::parseRequestLine(
   properly encoded.
   No whitespace is allowed in the request-target.
   */
-  auto versionEndIt = std::find(tokenStart, lineEnd, ' ');
+  auto versionEndIt = std::find(tokenStart - 1, lineEnd, ' ');
   // std::cout << versionEndIt << "\n";
   for (auto it = versionEndIt + 1; it != lineEnd; it++) {
     if (!isspace(*it)) {
