@@ -90,9 +90,10 @@ std::string Response::get(const Request &request,
       while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
         body += buffer.data();
       }
+      return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" + body;
     }
     return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" +
-           requestTarget + "\r\n" + body;
+           requestTarget;
   }
   if (requestLine.requestTarget == "/user-agent") {
     ContentMetaData cmd;
