@@ -157,6 +157,7 @@ bool Request::parseRequestLine(
   */
   std::cout << tokenStart << '\n';
   std::cout << lineEnd << '\n';
+  std::cout << "la\n";
   auto versionEndIt = std::find(tokenStart - 1, lineEnd, ' ');
   // std::cout << versionEndIt << "\n";
   for (auto it = versionEndIt; it != lineEnd; it++) {
