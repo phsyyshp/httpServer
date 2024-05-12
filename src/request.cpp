@@ -147,7 +147,11 @@ bool Request::parseRequestLine(
     std::cout << 1;
     return false;
   }
-  extractToken(tokenStart, lineEnd, version);
+  // We can't use extract token here because it will modify the iterator of
+  // start of version token, which is needed.
+  skipPrecedingSP(tokenStart, lineEnd);
+  auto tokenEnd = std::find(tokenStart, lineEnd, ' ');
+  version.assign(tokenStart, tokenEnd);
   /*
   RFC 9112:
   Recipients of an invalid request-line SHOULD respond with either a 400 (Bad
@@ -155,13 +159,9 @@ bool Request::parseRequestLine(
   properly encoded.
   No whitespace is allowed in the request-target.
   */
-  std::cout << version << '\n';
-  // std::cout << tokenStart << '\n';
-  // std::cout << lineEnd << '\n';
-  std::cout << "la\n";
-  auto versionEndIt = std::find(tokenStart - 1, lineEnd, ' ');
+  auto versionEndIt = std::find(tokenStart, lineEnd, ' ');
   // std::cout << versionEndIt << "\n";
-  for (auto it = versionEndIt; it != lineEnd; it++) {
+  for (auto it = versionEndIt + 1; it != lineEnd; it++) {
     if (!isspace(*it)) {
       std::cout << *it;
       std::cout << 2;
