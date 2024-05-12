@@ -132,7 +132,7 @@ std::string
 Response::contentHeaders(const ContentMetaData &contentMetaData) const {
   std::string out;
   if (!contentMetaData.encoding.empty()) {
-    out += "Content-Enconding: " + contentMetaData.encoding + "\r\n";
+    out += "Content-Encoding: " + contentMetaData.encoding + "\r\n";
   }
 
   if (!contentMetaData.type.empty()) {
