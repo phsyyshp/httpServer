@@ -140,8 +140,6 @@ bool Request::parseRequestLine(
   std::string requestTarget;
   std::string version;
   extractToken(tokenStart, lineEnd, method);
-  std::cout << method << '\n';
-
   extractToken(tokenStart, lineEnd, requestTarget);
 
   if (!isRequestTargetValid(requestTarget)) {
@@ -151,7 +149,6 @@ bool Request::parseRequestLine(
   }
 
   extractToken(tokenStart, lineEnd, version);
-  std::cout << version;
   /*
   RFC 9112:
   Recipients of an invalid request-line SHOULD respond with either a 400 (Bad
@@ -160,6 +157,7 @@ bool Request::parseRequestLine(
   No whitespace is allowed in the request-target.
   */
   auto versionEndIt = std::find(tokenStart, lineEnd, ' ');
+  std::cout << versionEndIt << "\n";
   for (auto it = versionEndIt + 1; it != lineEnd; it++) {
     if (!isspace(*it)) {
       std::cout << *it;
