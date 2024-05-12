@@ -113,7 +113,7 @@ std::string Response::statusLine(const Request &request, int statusCode) const {
     reasonPhrase = "OK";
     break;
   case 400:
-    reasonPhrase = "NOT FOUND";
+    reasonPhrase = "BAD RESPONSE";
     break;
   case 501:
     reasonPhrase = "NOT IMPLEMENTED";

@@ -38,6 +38,7 @@ bool Request::parse(std::array<char, 1024> &buffer) {
   auto requestLineEndIt = std::find(buffer.begin(), buffer.end(), '\r');
   std::replace_if(buffer.begin(), requestLineEndIt, isWhiteSpace, ' ');
   if (!parseRequestLine(buffer.begin(), requestLineEndIt)) {
+    std::cout << 0;
     return false;
   }
 
@@ -63,6 +64,8 @@ bool Request::parse(std::array<char, 1024> &buffer) {
     if (isOWS(*(fieldNameEndIt - 1))) {
       // TODO(): implement error
       /*RFC 9112: No whitespace is allowed between the field name and colon.*/
+
+      std::cout << 10;
       return false;
     }
     std::string fieldName(headerLineStartIT, fieldNameEndIt);
@@ -102,6 +105,7 @@ bool Request::parse(std::array<char, 1024> &buffer) {
   */
   // TODO(): add field value and repetitions error checks
   if (headersHash["Host"].empty()) {
+    std::cout << 11;
     return false;
   }
 
@@ -138,6 +142,8 @@ bool Request::parseRequestLine(
   extractToken(tokenStart, lineEnd, requestTarget);
 
   if (!isRequestTargetValid(requestTarget)) {
+
+    std::cout << 1;
     return false;
   }
 
@@ -152,6 +158,8 @@ bool Request::parseRequestLine(
   auto versionEndIt = std::find(tokenStart, lineEnd, ' ');
   for (auto it = versionEndIt + 1; it != lineEnd; it++) {
     if (!isspace(*it)) {
+
+      std::cout << 2;
       return false;
     }
   }
@@ -172,15 +180,18 @@ bool Request::isRequestTargetValid(const std::string &requestTarget) const {
   query       = *( pchar / "/" / "?" )
   */
   if (*requestTarget.begin() != '/') {
+    std::cout << 3;
     return false;
   }
   auto absolutePathEndIt =
       std::find(requestTarget.begin(), requestTarget.end(), '?');
   if (std::find_if(requestTarget.begin() + 1, absolutePathEndIt, isPchar) !=
       absolutePathEndIt) {
+    std::cout << 4;
     return false;
   }
   // TODO: parse Query
+  return true;
 }
 bool isPchar(char c) {
   // RFC: 3986
