@@ -73,22 +73,6 @@ std::string Response::get(const Request &request,
     return userAgent(request);
   }
   if (requestLine.requestTarget.find("/files/", 0) != std::string::npos) {
-    // std::ifstream file;
-    // file.open(dir + "/" + requestTarget.substr(7));
-    // if (!file) {
-    //   ContentMetaData cmd;
-    //   cmd.length = "0";
-    //   cmd.type = "text/plain";
-    //   return statusLine(request, 404) + contentHeaders(cmd) + "\r\n";
-    // }
-    // std::string line;
-    // while (getline(file, line)) {
-    //   body += line;
-    // }
-    // ContentMetaData cmd;
-    // cmd.length = std::to_string(body.length());
-    // cmd.type = "application/octet-stream";
-    // return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" + body;
 
     std::string path = dir + "/" + requestTarget.substr(7);
     return file(request, path);
