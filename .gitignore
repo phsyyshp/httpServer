@@ -46,3 +46,4 @@ CTestTestfile.cmake
 _deps
 #Tests
 testSite
+src/lala.cpp
