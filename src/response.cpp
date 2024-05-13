@@ -178,6 +178,7 @@ std::string Response::file(const Request &request,
                            const std::string &path) const {
 
   std::ifstream file;
+  file.open(path);
 
   if (!file) {
     ContentMetaData cmd;
