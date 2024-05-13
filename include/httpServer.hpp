@@ -32,7 +32,7 @@ public:
   HttpServer() {}
   void init() const {
 
-    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd < 0) {
       std::cerr << "Failed to create server socket\n";
     }
