@@ -134,5 +134,5 @@ public:
 private:
   int server_fd;
   struct sockaddr_in server_addr;
-  bool keepAlive;
+  bool keepAlive = true;
 };
