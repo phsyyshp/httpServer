@@ -56,15 +56,13 @@ std::string Response::post(const Request &request,
 std::string Response::get(const Request &request,
                           const std::string &dir) const {
 
-  std::string contentHeader;
-  RequestLine requestLine = request.getRequestLine();
-  std::string requestTarget = requestLine.requestTarget;
+  const RequestLine &requestLine = request.getRequestLine();
+  const std::string &requestTarget = requestLine.requestTarget;
 
   if (requestLine.requestTarget == "/") {
     return OK(request);
   }
 
-  std::string body;
   if (requestTarget.find("/echo/", 0) != std::string::npos) {
     return echo(request);
   }
@@ -72,11 +70,12 @@ std::string Response::get(const Request &request,
   if (requestLine.requestTarget == "/user-agent") {
     return userAgent(request);
   }
-  if (requestLine.requestTarget.find("/files/", 0) != std::string::npos) {
 
+  if (requestLine.requestTarget.find("/files/", 0) != std::string::npos) {
     std::string path = dir + "/" + requestTarget.substr(7);
     return file(request, path);
   }
+
   if (requestLine.requestTarget[0] == '/') {
     std::string path = dir + "/" + requestTarget.substr(1);
     return file(request, path);
@@ -108,6 +107,7 @@ std::string Response::statusLine(const Request &request, int statusCode) const {
   return request.getRequestLine().version + " " + std::to_string(statusCode) +
          " " + reasonPhrase + "\r\n";
 }
+
 std::string
 Response::contentHeaders(const ContentMetaData &contentMetaData) const {
   std::string out;
