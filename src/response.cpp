@@ -2,6 +2,13 @@
 #include <cstring>
 #include <string>
 #include <zlib.h>
+std::string getType(const std::string &path) {
+  auto it = std::find(path.rbegin(), path.rend(), '.');
+  std::string extention(it.base() - 1, path.end());
+
+  return (!FILE_TYPE_MAP[extention].empty()) ? FILE_TYPE_MAP[extention]
+                                             : "text/plain";
+}
 std::string Response::respond(const Request &request,
                               const std::string &dir) const {
 
@@ -144,6 +151,25 @@ std::string Response::get(const Request &request,
     ContentMetaData cmd;
     cmd.length = std::to_string(body.length());
     cmd.type = "application/octet-stream";
+    return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" + body;
+  }
+  if (requestLine.requestTarget[0] == '/') {
+    std::ifstream file;
+    file.open(dir + "/" + requestTarget.substr(1));
+    if (!file) {
+      ContentMetaData cmd;
+      cmd.length = "0";
+      cmd.type = "text/plain";
+      return statusLine(request, 404) + contentHeaders(cmd) + "\r\n";
+    }
+    std::stringstream tempBuffer;
+    tempBuffer << file.rdbuf();
+
+    std::string body = tempBuffer.str();
+
+    ContentMetaData cmd;
+    cmd.length = std::to_string(body.length());
+    cmd.type = getType(dir + "/" + requestTarget.substr(1));
     return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" + body;
   }
 

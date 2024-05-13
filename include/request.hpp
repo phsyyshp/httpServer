@@ -3,6 +3,7 @@
 #include <array>
 #include <fstream>
 #include <iostream>
+#include <mutex>
 #include <sstream>
 #include <unordered_map>
 #include <vector>
@@ -12,6 +13,7 @@ struct RequestLine {
   std::string requestTarget;
   std::string version;
 };
+extern std::mutex cout_mutex;
 bool isOWS(char c);
 bool isWhiteSpace(char c);
 bool isUnreserved(char c);
@@ -31,7 +33,7 @@ public:
 private:
   bool parseRequestLine(const std::array<char, 1024>::const_iterator &lineStart,
                         const std::array<char, 1024>::const_iterator &lineEnd);
-  void extractToken(std::array<char, 1024>::const_iterator &start,
+  bool extractToken(std::array<char, 1024>::const_iterator &start,
                     const std::array<char, 1024>::const_iterator &end,
                     std::string &token) const;
   bool isRequestTargetValid(const std::string &) const;

@@ -1,7 +1,10 @@
 #pragma once
 #include "request.hpp"
+#include <cstdio>
 #include <cstdlib>
 #include <memory>
+#include <string>
+#include <unordered_map>
 struct ContentMetaData {
   std::string type;
   std::string encoding;
@@ -9,6 +12,9 @@ struct ContentMetaData {
   std::string length;
   std::string location;
 };
+extern std::unordered_map<std::string, std::string> FILE_TYPE_MAP;
+std::string getType(const std::string &path);
+
 class Response {
 
 public:

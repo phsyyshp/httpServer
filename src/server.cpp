@@ -13,6 +13,24 @@
 #include <sys/types.h>
 #include <thread>
 #include <unistd.h>
+
+std::unordered_map<std::string, std::string> FILE_TYPE_MAP = {
+    {
+
+        ".txt", "text/plain"},
+    {".css", "text/css"},
+    {".html", "text/html"},
+    {".js", "text/javascript"},
+    {".apng", "image/apng"},
+    {".avif", "image/avif"},
+    {".gif", "image/gif"},
+    {".jpg", "image/jpeg"},
+    {".png", "image/png"},
+    {".svg", "image/svg+xml"},
+    {".webp", "image/webp"}
+
+};
+std::mutex cout_mutex;
 void handleConnection(int socket_fd, std::string dir) {
 
   if (socket_fd < 0) {

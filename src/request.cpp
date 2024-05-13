@@ -1,5 +1,7 @@
 #include "request.hpp"
 #include <cctype>
+#include <iostream>
+#include <mutex>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -22,6 +24,9 @@ void Request::preProcess(std::array<char, 1024> &buffer) {
   }
 }
 bool Request::parse(std::array<char, 1024> &buffer) {
+  if (buffer[0] == '\0') {
+    return false;
+  }
   bool isValid = true; // isNotBadRequest, isGoodRequest
   // Step 1.
   preProcess(buffer);
@@ -36,6 +41,12 @@ bool Request::parse(std::array<char, 1024> &buffer) {
   following octets: SP, HTAB, VT (%x0B), FF (%x0C), or bare CR.;
   */
   auto requestLineEndIt = std::find(buffer.begin(), buffer.end(), '\r');
+  // std::lock_guard<std::mutex> guard(cout_mutex);
+  // std::cout << buffer.data();
+  // std::cout.flush();
+  // std::cout << buffer[0] << "lala\n";
+  // std::cout << *requestLineEndIt;
+  // std::cout.flush();
   std::replace_if(buffer.begin(), requestLineEndIt, isWhiteSpace, ' ');
   if (!parseRequestLine(buffer.begin(), requestLineEndIt)) {
     std::cout << 0;
@@ -56,7 +67,12 @@ bool Request::parse(std::array<char, 1024> &buffer) {
     return true;
   }
   auto headerLineEndIT = std::find(headerLineStartIT, buffer.end(), '\r');
+  int infLooper = 0;
   while (true) {
+    if (infLooper == 5000) {
+      throw std::runtime_error("infinite loop");
+    }
+    infLooper++;
     auto fieldNameEndIt = std::find(headerLineStartIT, headerLineEndIT, ':');
     if (isOWS(*(fieldNameEndIt - 1))) {
       // TODO(): implement error
@@ -122,25 +138,37 @@ void Request::skipPrecedingSP(
     }
   }
 }
-void Request::extractToken(std::array<char, 1024>::const_iterator &start,
+bool Request::extractToken(std::array<char, 1024>::const_iterator &start,
                            const std::array<char, 1024>::const_iterator &end,
                            std::string &token) const {
   skipPrecedingSP(start, end);
   /*RFC 9112: request-line   = method SP request-target SP HTTP-version*/
   auto tokenEnd = std::find(start, end, ' ');
-  token.assign(start, tokenEnd);
-  start = tokenEnd + 1;
+  if (start != tokenEnd) {
+
+    token.assign(start, tokenEnd);
+    start = tokenEnd + 1;
+    return true;
+  }
+  return false;
+  // if(tokenEnd!=end)
 }
 bool Request::parseRequestLine(
     const std::array<char, 1024>::const_iterator &lineStart,
     const std::array<char, 1024>::const_iterator &lineEnd) {
 
+  // std::cout << *lineStart;
+  // std::cout.flush();
   auto tokenStart = lineStart;
   std::string method;
   std::string requestTarget;
   std::string version;
-  extractToken(tokenStart, lineEnd, method);
-  extractToken(tokenStart, lineEnd, requestTarget);
+  if (!extractToken(tokenStart, lineEnd, method)) {
+    return false;
+  }
+  if (!extractToken(tokenStart, lineEnd, requestTarget)) {
+    return false;
+  }
 
   if (!isRequestTargetValid(requestTarget)) {
 
