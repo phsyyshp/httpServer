@@ -66,7 +66,6 @@ public:
   }
 
   void handleConnection(int socket_fd, std::string dir) {
-
     if (socket_fd < 0) {
       std::cerr << "Invalid socket file descriptor\n";
       return; // E
@@ -93,6 +92,12 @@ public:
 
     send(socket_fd, responseBuffer.data(), responseBuffer.size(), 0);
     if (request.getHeaderHash()["Connection"] == "close") {
+      /*RFC: 9112
+        If the "close" connection option is present (Section 9.6), the
+        connection will not persist after the current response; else, If the
+        received protocol is HTTP/1.1 (or later), the connection will persist
+        after the current response;
+      */
       keepAlive = false;
       close(socket_fd);
     }
@@ -112,9 +117,18 @@ public:
     // }
 
     // std::vector<std::thread> threads;
-    socket_fd = accept(server_fd, (struct sockaddr *)&client_addr,
-                       (socklen_t *)&client_addr_len);
     while (keepAlive) {
+      /*
+      RFC 9112:
+      HTTP/1.1 defaults to the use of "persistent connections", allowing
+      multiple requests and responses to be carried over a single connection.
+      HTTP implementations SHOULD support persistent connections.
+      A recipient determines whether a connection is persistent or not based on
+      the protocol version and Connection header field (Section 7.6.1 of [HTTP])
+      in the most recently received message, if any:
+      */
+      socket_fd = accept(server_fd, (struct sockaddr *)&client_addr,
+                         (socklen_t *)&client_addr_len);
       if (socket_fd < 0) {
         std::cerr << "Failed to accept connection\n";
         continue;
@@ -122,6 +136,7 @@ public:
       handleConnection(socket_fd, dir);
       // threads.emplace_back(handleConnection, socket_fd, dir);
     }
+    keepAlive = true;
 
     // for (auto &t : threads) {
     //   if (t.joinable()) {
