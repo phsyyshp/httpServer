@@ -30,7 +30,7 @@ class HttpServer {
 
 public:
   HttpServer() {}
-  void init() const {
+  void init() {
 
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd < 0) {
