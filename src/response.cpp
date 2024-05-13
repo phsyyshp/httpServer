@@ -7,7 +7,7 @@ std::string getType(const std::string &path) {
   std::string extention(it.base() - 1, path.end());
 
   return (!FILE_TYPE_MAP[extention].empty()) ? FILE_TYPE_MAP[extention]
-                                             : "text/plain";
+                                             : "application/octet-stream";
 }
 std::string Response::respond(const Request &request,
                               const std::string &dir) const {
@@ -73,22 +73,25 @@ std::string Response::get(const Request &request,
     return userAgent(request);
   }
   if (requestLine.requestTarget.find("/files/", 0) != std::string::npos) {
-    std::ifstream file;
-    file.open(dir + "/" + requestTarget.substr(7));
-    if (!file) {
-      ContentMetaData cmd;
-      cmd.length = "0";
-      cmd.type = "text/plain";
-      return statusLine(request, 404) + contentHeaders(cmd) + "\r\n";
-    }
-    std::string line;
-    while (getline(file, line)) {
-      body += line;
-    }
-    ContentMetaData cmd;
-    cmd.length = std::to_string(body.length());
-    cmd.type = "application/octet-stream";
-    return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" + body;
+    // std::ifstream file;
+    // file.open(dir + "/" + requestTarget.substr(7));
+    // if (!file) {
+    //   ContentMetaData cmd;
+    //   cmd.length = "0";
+    //   cmd.type = "text/plain";
+    //   return statusLine(request, 404) + contentHeaders(cmd) + "\r\n";
+    // }
+    // std::string line;
+    // while (getline(file, line)) {
+    //   body += line;
+    // }
+    // ContentMetaData cmd;
+    // cmd.length = std::to_string(body.length());
+    // cmd.type = "application/octet-stream";
+    // return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" + body;
+
+    std::string path = dir + "/" + requestTarget.substr(7);
+    return file(request, path);
   }
   if (requestLine.requestTarget[0] == '/') {
     std::string path = dir + "/" + requestTarget.substr(1);
@@ -143,12 +146,6 @@ Response::contentHeaders(const ContentMetaData &contentMetaData) const {
 
   return out;
 }
-std::string Response::badRequest(const Request &request) const {
-  ContentMetaData cmd;
-  cmd.length = "0";
-  cmd.type = "text/plain";
-  return statusLine(request, 400) + contentHeaders(cmd) + "\r\n";
-}
 void Response::contentNegotiation(const Request &request) {
   const auto &headers = request.getHeaderHash();
 };
@@ -195,6 +192,12 @@ std::string Response::file(const Request &request,
   cmd.length = std::to_string(body.length());
   cmd.type = getType(path);
   return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" + body;
+}
+std::string Response::badRequest(const Request &request) const {
+  ContentMetaData cmd;
+  cmd.length = "0";
+  cmd.type = "text/plain";
+  return statusLine(request, 400) + contentHeaders(cmd) + "\r\n";
 }
 std::string Response::notFound(const Request &request) const {
 
