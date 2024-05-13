@@ -92,6 +92,10 @@ public:
     }
 
     send(socket_fd, responseBuffer.data(), responseBuffer.size(), 0);
+    if (request.getHeaderHash()["Connection"] == "close") {
+      keepAlive = false;
+      close(socket_fd);
+    }
   }
   void handleConnections(std::string dir) {
     struct sockaddr_in client_addr;
@@ -108,9 +112,9 @@ public:
     // }
 
     // std::vector<std::thread> threads;
-    while (true) {
-      socket_fd = accept(server_fd, (struct sockaddr *)&client_addr,
-                         (socklen_t *)&client_addr_len);
+    socket_fd = accept(server_fd, (struct sockaddr *)&client_addr,
+                       (socklen_t *)&client_addr_len);
+    while (keepAlive) {
       if (socket_fd < 0) {
         std::cerr << "Failed to accept connection\n";
         continue;
@@ -130,4 +134,5 @@ public:
 private:
   int server_fd;
   struct sockaddr_in server_addr;
+  bool keepAlive;
 };
