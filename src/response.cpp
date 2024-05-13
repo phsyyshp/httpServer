@@ -61,79 +61,16 @@ std::string Response::get(const Request &request,
   std::string requestTarget = requestLine.requestTarget;
 
   if (requestLine.requestTarget == "/") {
-    ContentMetaData cmd;
-    cmd.length = "0";
-    cmd.type = "text/plain";
-    return statusLine(request, 200) + contentHeaders(cmd) + "\r\n";
+    return OK(request);
   }
+
   std::string body;
   if (requestTarget.find("/echo/", 0) != std::string::npos) {
-    requestTarget.erase(requestTarget.begin(), requestTarget.begin() + 6);
-    ContentMetaData cmd;
-
-    cmd.length = std::to_string(requestTarget.length());
-    cmd.type = "text/plain";
-    std::cout << request.getHeaderHash()["Accept-Encoding"];
-    if (request.getHeaderHash()["Accept-Encoding"].find("gzip") !=
-        std::string::npos) {
-      cmd.encoding = "gzip";
-
-      // Initialize zlib structures
-      z_stream zs; // z_stream is zlib's control structure
-      memset(&zs, 0, sizeof(zs));
-
-      if (deflateInit2(&zs, Z_BEST_COMPRESSION, Z_DEFLATED, MAX_WBITS + 16, 8,
-                       Z_DEFAULT_STRATEGY) != Z_OK) {
-        throw(std::runtime_error("Failed to initialize zlib."));
-      }
-
-      zs.next_in =
-          reinterpret_cast<Bytef *>(const_cast<char *>(requestTarget.data()));
-      zs.avail_in = requestTarget.size(); // Set the z_stream's input
-
-      int ret;
-      char outbuffer[32768];
-      std::vector<char> compressedData;
-
-      // Compress the data into the buffer
-      do {
-        zs.next_out = reinterpret_cast<Bytef *>(outbuffer);
-        zs.avail_out = sizeof(outbuffer);
-
-        ret = deflate(&zs, Z_FINISH); // Finish compression
-
-        if (compressedData.size() < zs.total_out) {
-          compressedData.insert(compressedData.end(), outbuffer,
-                                outbuffer + zs.total_out -
-                                    compressedData.size());
-        }
-      } while (ret == Z_OK);
-
-      deflateEnd(&zs);
-
-      if (ret != Z_STREAM_END) {
-        std::ostringstream oss;
-        oss << "Exception during zlib compression: (" << ret << ") " << zs.msg;
-        throw(std::runtime_error(oss.str()));
-      }
-
-      // Convert the compressed data into a std::string
-      std::string body(compressedData.begin(), compressedData.end());
-
-      cmd.length = std::to_string(body.length()); // Set the content length
-
-      // Construct the HTTP response
-      return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" + body;
-    }
-    return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" +
-           requestTarget;
+    return echo(request);
   }
+
   if (requestLine.requestTarget == "/user-agent") {
-    ContentMetaData cmd;
-    cmd.length = std::to_string(request.getHeaderHash()["User-Agent"].length());
-    cmd.type = "text/plain";
-    return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" +
-           request.getHeaderHash()["User-Agent"];
+    return userAgent(request);
   }
   if (requestLine.requestTarget.find("/files/", 0) != std::string::npos) {
     std::ifstream file;
@@ -154,29 +91,11 @@ std::string Response::get(const Request &request,
     return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" + body;
   }
   if (requestLine.requestTarget[0] == '/') {
-    std::ifstream file;
-    file.open(dir + "/" + requestTarget.substr(1));
-    if (!file) {
-      ContentMetaData cmd;
-      cmd.length = "0";
-      cmd.type = "text/plain";
-      return statusLine(request, 404) + contentHeaders(cmd) + "\r\n";
-    }
-    std::stringstream tempBuffer;
-    tempBuffer << file.rdbuf();
-
-    std::string body = tempBuffer.str();
-
-    ContentMetaData cmd;
-    cmd.length = std::to_string(body.length());
-    cmd.type = getType(dir + "/" + requestTarget.substr(1));
-    return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" + body;
+    std::string path = dir + "/" + requestTarget.substr(1);
+    return file(request, path);
   }
 
-  ContentMetaData cmd;
-  cmd.length = "0";
-  cmd.type = "text/plain";
-  return statusLine(request, 404) + contentHeaders(cmd) + "\r\n";
+  return notFound(request);
 }
 
 std::string Response::statusLine(const Request &request, int statusCode) const {
@@ -233,3 +152,102 @@ std::string Response::badRequest(const Request &request) const {
 void Response::contentNegotiation(const Request &request) {
   const auto &headers = request.getHeaderHash();
 };
+std::string Response::echo(const Request &request) const {
+
+  const std::string &requestTarget = request.getRequestLine().requestTarget;
+  std::string body = requestTarget.substr(6);
+  ContentMetaData cmd;
+  cmd.length = std::to_string(body.length());
+  cmd.type = "text/plain";
+  if (request.getHeaderHash()["Accept-Encoding"].find("gzip") !=
+      std::string::npos) {
+    cmd.encoding = "gzip";
+    body = compressBody(body);
+    cmd.length = std::to_string(body.length()); // Set the content length
+  }
+  return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" + body;
+}
+std::string Response::userAgent(const Request &request) const {
+  ContentMetaData cmd;
+  cmd.length = std::to_string(request.getHeaderHash()["User-Agent"].length());
+  cmd.type = "text/plain";
+  return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" +
+         request.getHeaderHash()["User-Agent"];
+}
+std::string Response::file(const Request &request,
+                           const std::string &path) const {
+
+  std::ifstream file;
+
+  if (!file) {
+    ContentMetaData cmd;
+    cmd.length = "0";
+    cmd.type = "text/plain";
+    return statusLine(request, 404) + contentHeaders(cmd) + "\r\n";
+  }
+
+  std::stringstream tempBuffer;
+  tempBuffer << file.rdbuf();
+  std::string body = tempBuffer.str();
+
+  ContentMetaData cmd;
+  cmd.length = std::to_string(body.length());
+  cmd.type = getType(path);
+  return statusLine(request, 200) + contentHeaders(cmd) + "\r\n" + body;
+}
+std::string Response::notFound(const Request &request) const {
+
+  ContentMetaData cmd;
+  cmd.length = "0";
+  cmd.type = "text/plain";
+  return statusLine(request, 404) + contentHeaders(cmd) + "\r\n";
+}
+std::string Response::OK(const Request &request) const {
+  ContentMetaData cmd;
+  cmd.length = "0";
+  cmd.type = "text/plain";
+  return statusLine(request, 200) + contentHeaders(cmd) + "\r\n";
+}
+std::string compressBody(const std::string &toCompress) {
+
+  // Initialize zlib structures
+  z_stream zs; // z_stream is zlib's control structure
+  memset(&zs, 0, sizeof(zs));
+
+  if (deflateInit2(&zs, Z_BEST_COMPRESSION, Z_DEFLATED, MAX_WBITS + 16, 8,
+                   Z_DEFAULT_STRATEGY) != Z_OK) {
+    throw(std::runtime_error("Failed to initialize zlib."));
+  }
+
+  zs.next_in = reinterpret_cast<Bytef *>(const_cast<char *>(toCompress.data()));
+  zs.avail_in = toCompress.size(); // Set the z_stream's input
+
+  int ret;
+  char outbuffer[32768];
+  std::vector<char> compressedData;
+
+  // Compress the data into the buffer
+  do {
+    zs.next_out = reinterpret_cast<Bytef *>(outbuffer);
+    zs.avail_out = sizeof(outbuffer);
+
+    ret = deflate(&zs, Z_FINISH); // Finish compression
+
+    if (compressedData.size() < zs.total_out) {
+      compressedData.insert(compressedData.end(), outbuffer,
+                            outbuffer + zs.total_out - compressedData.size());
+    }
+  } while (ret == Z_OK);
+
+  deflateEnd(&zs);
+
+  if (ret != Z_STREAM_END) {
+    std::ostringstream oss;
+    oss << "Exception during zlib compression: (" << ret << ") " << zs.msg;
+    throw(std::runtime_error(oss.str()));
+  }
+
+  // Convert the compressed data into a std::string
+  std::string body(compressedData.begin(), compressedData.end());
+  return body;
+}
