@@ -26,6 +26,93 @@
 #include <mutex>
 #include <queue>
 #include <thread>
+
+class ThreadPool {
+public:
+  // // Constructor to creates a thread pool with given
+  // number of threads
+  ThreadPool(size_t num_threads = std::thread::hardware_concurrency()) {
+
+    // Creating worker threads
+    for (size_t i = 0; i < num_threads; ++i) {
+      threads_.emplace_back([this] {
+        while (true) {
+          std::function<void()> task;
+          // The reason for putting the below code
+          // here is to unlock the queue before
+          // executing the task so that other
+          // threads can perform enqueue tasks
+          {
+            // Locking the queue so that data
+            // can be shared safely
+            std::unique_lock<std::mutex> lock(queue_mutex_);
+
+            // Waiting until there is a task to
+            // execute or the pool is stopped
+            cv_.wait(lock, [this] { return !tasks_.empty() || stop_; });
+
+            // exit the thread in case the pool
+            // is stopped and there are no tasks
+            if (stop_ && tasks_.empty()) {
+              return;
+            }
+
+            // Get the next task from the queue
+            task = move(tasks_.front());
+            tasks_.pop();
+          }
+
+          task();
+        }
+      });
+    }
+  }
+
+  // Destructor to stop the thread pool
+  ~ThreadPool() {
+    {
+      // Lock the queue to update the stop flag safely
+      std::unique_lock<std::mutex> lock(queue_mutex_);
+      stop_ = true;
+    }
+
+    // Notify all threads
+    cv_.notify_all();
+
+    // Joining all worker threads to ensure they have
+    // completed their tasks
+    for (auto &thread : threads_) {
+      thread.join();
+    }
+  }
+
+  // Enqueue task for execution by the thread pool
+  void enqueue(std::function<void()> task) {
+    {
+      std::unique_lock<std::mutex> lock(queue_mutex_);
+      tasks_.emplace(move(task));
+    }
+    cv_.notify_one();
+  }
+
+private:
+  // Vector to store worker threads
+  std::vector<std::thread> threads_;
+
+  // Queue of tasks
+  std::queue<std::function<void()>> tasks_;
+
+  // Mutex to synchronize access to shared data
+  std::mutex queue_mutex_;
+
+  // Condition variable to signal changes in the state of
+  // the tasks queue
+  std::condition_variable cv_;
+
+  // Flag to indicate whether the thread pool should stop
+  // or not
+  bool stop_ = false;
+};
 class HttpServer {
 
 public:
@@ -72,34 +159,51 @@ public:
     }
     std::cout << "Client connected\n";
 
-    std::array<char, 1024> buffer;
-    int valread = read(socket_fd, buffer.data(), sizeof(buffer) - 1);
+    /*
+    RFC 9112:
+    HTTP/1.1 defaults to the use of "persistent connections", allowing
+    multiple requests and responses to be carried over a single connection.
+    HTTP implementations SHOULD support persistent connections.
+    A recipient determines whether a connection is persistent or not based on
+    the protocol version and Connection header field (Section 7.6.1 of [HTTP])
+    in the most recently received message, if any:
+    */
+    bool localKeepAlive = true;
+    while (localKeepAlive) {
 
-    if (valread < 0) {
-      std::cerr << "Error reading from socket\n";
-      return; // Handle read error
-    }
-    buffer[valread] = '\0'; // Ensure null-termination
-    Request request;
-    std::string responseBuffer;
-    Response response;
+      std::array<char, 1024> buffer;
+      int valread = read(socket_fd, buffer.data(), sizeof(buffer) - 1);
 
-    if (request.parse(buffer)) {
-      responseBuffer = response.respond(request, dir);
-    } else {
-      responseBuffer = response.badRequest(request);
-    }
+      if (valread < 0) {
+        std::cerr << "Error reading from socket\n";
+        close(socket_fd);
+        return; // Handle read error
+      } else if (valread == 0) {
+        close(socket_fd);
+        return;
+      }
+      buffer[valread] = '\0'; // Ensure null-termination
+      Request request;
+      std::string responseBuffer;
+      Response response;
 
-    send(socket_fd, responseBuffer.data(), responseBuffer.size(), 0);
-    if (request.getHeaderHash()["Connection"] == "close") {
-      /*RFC: 9112
-        If the "close" connection option is present (Section 9.6), the
-        connection will not persist after the current response; else, If the
-        received protocol is HTTP/1.1 (or later), the connection will persist
-        after the current response;
-      */
-      keepAlive = false;
-      close(socket_fd);
+      if (request.parse(buffer)) {
+        responseBuffer = response.respond(request, dir);
+      } else {
+        responseBuffer = response.badRequest(request);
+      }
+
+      send(socket_fd, responseBuffer.data(), responseBuffer.size(), 0);
+      if (request.getHeaderHash()["Connection"] == "close") {
+        /*RFC: 9112
+          If the "close" connection option is present (Section 9.6), the
+          connection will not persist after the current response; else, If the
+          received protocol is HTTP/1.1 (or later), the connection will persist
+          after the current response;
+        */
+        localKeepAlive = false;
+        close(socket_fd);
+      }
     }
   }
   void handleConnections(std::string dir) {
@@ -109,32 +213,22 @@ public:
     int client_addr_len = sizeof(client_addr);
     int socket_fd;
     // //tp
-    // ThreadPool pool;
-    // for (int i = 0; i < thread::hardware_concurrency() + 1; i++) {
-    //   pool.enqueue([socket_fd, dir] { return handleConnection(socket_fd,
-    //   dir);
-    //   });
-    // }
+    ThreadPool pool;
+    for (int i = 0; i < std::thread::hardware_concurrency() + 1; i++) {
+      pool.enqueue(
+          [socket_fd, dir, this] { return handleConnection(socket_fd, dir); });
+    }
 
-    // std::vector<std::thread> threads;
-    while (keepAlive) {
-      /*
-      RFC 9112:
-      HTTP/1.1 defaults to the use of "persistent connections", allowing
-      multiple requests and responses to be carried over a single connection.
-      HTTP implementations SHOULD support persistent connections.
-      A recipient determines whether a connection is persistent or not based on
-      the protocol version and Connection header field (Section 7.6.1 of [HTTP])
-      in the most recently received message, if any:
-      */
+    std::vector<std::thread> threads;
+    while (true) {
       socket_fd = accept(server_fd, (struct sockaddr *)&client_addr,
                          (socklen_t *)&client_addr_len);
       if (socket_fd < 0) {
         std::cerr << "Failed to accept connection\n";
         continue;
       }
-      handleConnection(socket_fd, dir);
-      // threads.emplace_back(handleConnection, socket_fd, dir);
+      // handleConnection(socket_fd, dir);
+      threads.emplace_back(handleConnection, socket_fd, dir);
     }
     keepAlive = true;
 
@@ -149,5 +243,7 @@ public:
 private:
   int server_fd;
   struct sockaddr_in server_addr;
+  ThreadPool pool_;
+  std::mutex keepAliveMutex_;
   bool keepAlive = true;
 };

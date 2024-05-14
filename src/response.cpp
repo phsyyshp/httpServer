@@ -127,7 +127,10 @@ Response::contentHeaders(const ContentMetaData &contentMetaData) const {
   if (!contentMetaData.location.empty()) {
     out += "Content-Location: " + contentMetaData.location + "\r\n";
   }
-
+  // if (request.getHeaderHash()["Connection"] == "close") {
+  //   std::string con = "Connection: ";
+  //   out += con + "close\r\n";
+  // }
   return out;
 }
 void Response::contentNegotiation(const Request &request) {
