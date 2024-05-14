@@ -41,15 +41,12 @@ bool Request::parse(std::array<char, 1024> &buffer) {
   following octets: SP, HTAB, VT (%x0B), FF (%x0C), or bare CR.;
   */
   auto requestLineEndIt = std::find(buffer.begin(), buffer.end(), '\r');
-  // std::lock_guard<std::mutex> guard(cout_mutex);
-  // std::cout << buffer.data();
-  // std::cout.flush();
-  // std::cout << buffer[0] << "lala\n";
-  // std::cout << *requestLineEndIt;
-  // std::cout.flush();
   std::replace_if(buffer.begin(), requestLineEndIt, isWhiteSpace, ' ');
   if (!parseRequestLine(buffer.begin(), requestLineEndIt)) {
     std::cout << 0;
+    return false;
+  }
+  if (requestLineEndIt == buffer.end()) {
     return false;
   }
 
@@ -170,7 +167,7 @@ bool Request::parseRequestLine(
     return false;
   }
 
-  if (!isRequestTargetValid(requestTarget)) {
+  if (!extractAbsolutePath(requestTarget)) {
 
     std::cout << 1;
     return false;
@@ -201,7 +198,7 @@ bool Request::parseRequestLine(
   return true;
 }
 
-bool Request::isRequestTargetValid(const std::string &requestTarget) const {
+bool Request::extractAbsolutePath(std::string &requestTarget) const {
   /*
   RFC:9122
   request-target = origin-form
@@ -227,6 +224,7 @@ bool Request::isRequestTargetValid(const std::string &requestTarget) const {
   //   return false;
   // }
   // TODO: parse Query
+  requestTarget.assign(requestTarget.begin(), absolutePathEndIt);
   return true;
 }
 

@@ -36,7 +36,7 @@ private:
   bool extractToken(std::array<char, 1024>::const_iterator &start,
                     const std::array<char, 1024>::const_iterator &end,
                     std::string &token) const;
-  bool isRequestTargetValid(const std::string &) const;
+  bool extractAbsolutePath(std::string &) const;
   void preProcess(std::array<char, 1024> &buffer);
   void skipPrecedingSP(std::array<char, 1024>::const_iterator &it,
                        const std::array<char, 1024>::const_iterator &end) const;
