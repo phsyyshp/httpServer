@@ -213,37 +213,25 @@ public:
     int client_addr_len = sizeof(client_addr);
     int socket_fd;
     // //tp
-    ThreadPool pool;
-    for (int i = 0; i < std::thread::hardware_concurrency() + 1; i++) {
-      pool.enqueue(
-          [socket_fd, dir, this] { return handleConnection(socket_fd, dir); });
-    }
-
-    std::vector<std::thread> threads;
     while (true) {
-      socket_fd = accept(server_fd, (struct sockaddr *)&client_addr,
-                         (socklen_t *)&client_addr_len);
+
+      client_addr_len = sizeof(client_addr);
+      int socket_fd = accept(server_fd, (struct sockaddr *)&client_addr,
+                             (socklen_t *)&client_addr_len);
       if (socket_fd < 0) {
         std::cerr << "Failed to accept connection\n";
         continue;
       }
-      // handleConnection(socket_fd, dir);
-      threads.emplace_back(handleConnection, socket_fd, dir);
+      pool.enqueue(
+          [socket_fd, dir, this] { return handleConnection(socket_fd, dir); });
     }
-    keepAlive = true;
-
-    // for (auto &t : threads) {
-    //   if (t.joinable()) {
-    //     t.join();
-    //   }
-    // }
   }
   void closeServer() const { close(server_fd); }
 
 private:
   int server_fd;
   struct sockaddr_in server_addr;
-  ThreadPool pool_;
+  ThreadPool pool;
   std::mutex keepAliveMutex_;
   bool keepAlive = true;
 };
