@@ -1,4 +1,5 @@
 
+#pragma once
 #include "request.hpp"
 #include "response.hpp"
 #include <arpa/inet.h>
