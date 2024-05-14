@@ -66,64 +66,131 @@ bool Request::parse(std::array<char, 1024> &buffer) {
 
   /* RFC 9112: A recipient that receives whitespace between the start-line and
    * the first header field MUST either reject the message as invalid or ...*/
-  if (isOWS(*(requestLineEndIt + 2))) {
+  if (isOWS(*(requestLineEndIt + 2))) { // Potential buffer overflow here!!!
+                                        // requestLineEndIt might not be buffer.end() but it might be buffer.end() - 2
+                                        // and causing buffer overflow!!
     throw std::runtime_error("A sender MUST NOT send whitespace between the "
                              "start-line and the first header field.");
   }
 
   // Step 3. Headers
-  auto headerLineStartIT = requestLineEndIt + 2;
+  auto position = requestLineEndIt + 2;
 
-  if ((*headerLineStartIT) == '\r') {
-    return true;
-  }
-  auto headerLineEndIT = std::find(headerLineStartIT, buffer.end(), '\r');
-  int infLooper = 0;
+  // if ((*headerLineStartIT) == '\r') {
+  //   return true;
+  // }
+  // auto headerLineEndIT = std::find(headerLineStartIT, buffer.end(), '\r');
+  // int infLooper = 0;
+  // while (true) {
+  //   if (infLooper == 5000) {
+  //     throw std::runtime_error("infinite loop");
+  //   }
+  //   infLooper++;
+  //   auto fieldNameEndIt = std::find(headerLineStartIT, headerLineEndIT, ':');
+  //   if (isOWS(*(fieldNameEndIt - 1))) { //Here first need to check if ':' is actaully found or not by comparing fieldNameEndIt with headerLineEndIT!!
+  //     // TODO(): implement error
+  //     /*RFC 9112: No whitespace is allowed between the field name and colon.*/
+
+  //     std::cout << 17;
+  //     return false;
+  //   }
+  //   std::string fieldName(headerLineStartIT, fieldNameEndIt);
+  //   /*RFC 9112: A field line value might be preceded and/or followed by optional
+  //    * whitespace (OWS) */
+
+  //   auto fieldValueStartIt = (fieldNameEndIt + 1);
+  //   for (; fieldValueStartIt != headerLineEndIT; fieldValueStartIt++) {
+  //     if (!isOWS(*fieldValueStartIt)) {
+  //       break;
+  //     }
+  //   }
+
+  //   auto fieldValueEndIt = headerLineEndIT;
+  //   for (; fieldValueStartIt != fieldValueEndIt; fieldValueEndIt--) {
+  //     if (!isOWS(*(fieldValueEndIt - 1))) {
+  //       break;
+  //     }
+  //   }
+  //   std::string fieldValue(fieldValueStartIt, fieldValueEndIt);
+  //   headersHash[fieldName] = fieldValue;
+  //   if (*(headerLineEndIT + 2) == '\r') {
+  //     break;
+  //   }
+  //   headerLineStartIT = headerLineEndIT + 2;
+  //   headerLineEndIT = std::find(headerLineStartIT, buffer.end(), '\r');
+  // }
+  // A preferably better implementation might be this:
+  // it's always important to know that
+  // the iterators are in valid range and that there isn't buffer overflows, the strategy here
+  // is to have a position iterator at the start of the header line.
+  // Then find the end of the header line, parse the header, validate name and value
+  // Continue to the next line until the end of header is reached.
+  // HTTP-message   = start-line CRLF
+  //                *( field-line CRLF )----> *(ows)?fieldName:*(ows)fieldValue*(ows)CRLF
+  //                CRLF
+  //                [ message-body ]
   while (true) {
-    if (infLooper == 5000) {
-      throw std::runtime_error("infinite loop");
-    }
-    infLooper++;
-    auto fieldNameEndIt = std::find(headerLineStartIT, headerLineEndIT, ':');
-    if (isOWS(*(fieldNameEndIt - 1))) {
-      // TODO(): implement error
-      /*RFC 9112: No whitespace is allowed between the field name and colon.*/
-
-      std::cout << 17;
+    auto lineEnd = std::find(position, buffer.end(), '\r');
+    if (lineEnd == buffer.end()) {
+      //Broken header line
       return false;
     }
-    std::string fieldName(headerLineStartIT, fieldNameEndIt);
-    /*RFC 9112: A field line value might be preceded and/or followed by optional
-     * whitespace (OWS) */
-
-    auto fieldValueStartIt = (fieldNameEndIt + 1);
-    for (; fieldValueStartIt != headerLineEndIT; fieldValueStartIt++) {
-      if (!isOWS(*fieldValueStartIt)) {
-        break;
-      }
-    }
-
-    auto fieldValueEndIt = headerLineEndIT;
-    for (; fieldValueStartIt != fieldValueEndIt; fieldValueEndIt--) {
-      if (!isOWS(*(fieldValueEndIt - 1))) {
-        break;
-      }
-    }
-    std::string fieldValue(fieldValueStartIt, fieldValueEndIt);
-    headersHash[fieldName] = fieldValue;
-    if (*(headerLineEndIT + 2) == '\r') {
+    if (position == lineEnd) {
+      //We hit the CRLF signaling the end of the header
+      position = lineEnd + 2;
+      //+2 is safe here since there is a LF following lineEnd and additional step is allowed to the reach the buffer.end() in the worst case
       break;
     }
-    headerLineStartIT = headerLineEndIT + 2;
-    headerLineEndIT = std::find(headerLineStartIT, buffer.end(), '\r');
+    auto colonPosition = std::find(position, lineEnd, ':');
+    if (colonPosition == lineEnd) {
+      //Broken header line: No header field name was found!
+      return false;
+	}
+	std::string fieldName(position, colonPosition);
+	if (fieldName.size() == 0) {
+      //Broken header line: empty header field name!
+      return false;
+    }
+    //Now that we know fieldName is non-empty we can freely check if the last element is ows or not
+    if (isOWS(fieldName.back())) {
+      //Broken header line
+      /*RFC 9112: No whitespace is allowed between the field name and colon.*/
+      return false;
+	}
+    //Looks like fieldName is valid, so we can move the position one past colonPosition
+    position = colonPosition + 1;
+    //Now skip the potentially preceeding optional white spaces...
+    auto fieldValueStart = std::find_if_not(position, lineEnd, &isOWS);
+    if (fieldValueStart == lineEnd) {
+      //Broken header line
+      //No field value was found
+      return false;
+    }
+    //Now skip the potentially following optional white spaces...
+    auto fieldValueEnd = lineEnd;
+    while (fieldValueEnd - 1 != fieldValueStart) {
+      if (!isOWS(*(fieldValueEnd - 1))) {
+        break;
+      }
+      --fieldValueEnd;
+    }
+    //Previously confirmed that there is at least one character
+    //different than optional white space in the interval [fieldValueStart, lineEnd)
+    //so it's safe to set fieldValue to be the string in the interval [fieldValueStart, fieldValueEnd) since it won't be empty
+    std::string fieldValue(fieldValueStart, fieldValueEnd);
+    //Save the header data
+    headersHash[fieldName] = fieldValue;
+    //set position to the next of LN which is following lineEnd
+    position = lineEnd + 2; //CRLF
   }
   // Step 4. Body
-  auto bodyStartIt = headerLineEndIT + 4;
-  int i = 0;
-  for (auto it = bodyStartIt; buffer.end() != it; it++) {
-    body[i] = *it;
-    i++;
-  }
+  // auto bodyStartIt = lineEnd + 4; Now it automatically became lineEnd
+  std::copy(position, buffer.end(), body.begin()); //Copy the rest to body buffer, this might be empty all we know
+  // int i = 0;
+  // for (auto it = bodyStartIt; buffer.end() != it; it++) {
+  //   body[i] = *it;
+  //   i++;
+  // }
   /*
   RFC 9112: A server MUST respond with a 400 (Bad Request) status code to any
   HTTP/1.1 request message that lacks a Host header field and to any request
@@ -131,12 +198,12 @@ bool Request::parse(std::array<char, 1024> &buffer) {
   field with an invalid field value.
   */
   // TODO(): add field value and repetitions error checks
-  if (headersHash["Host"].empty()) {
+  if (headersHash.find("Host") == headersHash.end()) {
     std::cout << 11;
     return false;
   }
 
-  return isValid;
+  return true;
 }
 
 void Request::skipPrecedingSP(
