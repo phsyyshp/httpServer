@@ -24,6 +24,20 @@ void Request::preProcess(std::array<char, 1024> &buffer) {
   }
 }
 bool Request::parse(std::array<char, 1024> &buffer) {
+  /*RFC:9112
+  An HTTP/1.1 message consists of a start-line followed by a CRLF and a sequence
+  of octets in a format similar to the Internet Message Format [RFC5322]: zero
+  or more header field lines (collectively referred to as the "headers" or the
+  "header section"), an empty line indicating the end of the header section, and
+  an optional message body.
+
+  HTTP-message   = start-line CRLF
+                   *( field-line CRLF )
+                   CRLF
+                   [ message-body ]
+
+  for syntax notation SEE syntax.hpp Elements
+  */
   if (buffer[0] == '\0') {
     return false;
   }
@@ -153,7 +167,9 @@ bool Request::extractToken(std::array<char, 1024>::const_iterator &start,
 bool Request::parseRequestLine(
     const std::array<char, 1024>::const_iterator &lineStart,
     const std::array<char, 1024>::const_iterator &lineEnd) {
-
+  /*RFC: 9112
+   request-line   = method SP request-target SP HTTP-version
+  */
   // std::cout << *lineStart;
   // std::cout.flush();
   auto tokenStart = lineStart;
