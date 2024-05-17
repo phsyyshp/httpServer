@@ -156,27 +156,26 @@ bool Request::parse(std::array<char, 1024> &buffer) {
 void Request::skipPrecedingSP(
     std::array<char, 1024>::const_iterator &it,
     const std::array<char, 1024>::const_iterator &end) const {
-
-  for (; it != end; it++) {
-    if (*it != ' ') {
-      break;
-    }
-  }
+  it = std::find_if_not(it, end, [](char c) { return c == ' '; });
 }
 bool Request::extractToken(std::array<char, 1024>::const_iterator &start,
                            const std::array<char, 1024>::const_iterator &end,
                            std::string &token) const {
   skipPrecedingSP(start, end);
   /*RFC 9112: request-line   = method SP request-target SP HTTP-version*/
-  auto tokenEnd = std::find(start, end, ' ');
-  if (start != tokenEnd) {
-
-    token.assign(start, tokenEnd);
-    start = tokenEnd + 1;
-    return true;
+  if (start == end) {
+    // empty token
+    return false;
   }
-  return false;
-  // if(tokenEnd!=end)
+  auto tokenEnd = std::find(start, end, ' ');
+  if (tokenEnd == end) {
+    // only one token
+    return false;
+  }
+
+  token.assign(start, tokenEnd);
+  start = std::next(tokenEnd, 1);
+  return true;
 }
 bool Request::parseRequestLine(
     const std::array<char, 1024>::const_iterator &lineStart,
@@ -239,7 +238,6 @@ bool Request::extractAbsolutePath(std::string &requestTarget) const {
   query       = *( pchar / "/" / "?" )
   */
   if (*requestTarget.begin() != '/') {
-    std::cout << requestTarget;
     std::cout << 3;
     return false;
   }
