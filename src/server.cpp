@@ -3,18 +3,11 @@
 // Class that represents a simple thread pool
 
 std::unordered_map<std::string, std::string> FILE_TYPE_MAP = {
-    {
-
-        ".txt", "text/plain"},
-    {".css", "text/css"},
-    {".html", "text/html"},
-    {".js", "text/javascript"},
-    {".apng", "image/apng"},
-    {".avif", "image/avif"},
-    {".gif", "image/gif"},
-    {".jpg", "image/jpeg"},
-    {".png", "image/png"},
-    {".svg", "image/svg+xml"},
+    {".txt", "text/plain"},  {".css", "text/css"},
+    {".html", "text/html"},  {".js", "text/javascript"},
+    {".apng", "image/apng"}, {".avif", "image/avif"},
+    {".gif", "image/gif"},   {".jpg", "image/jpeg"},
+    {".png", "image/png"},   {".svg", "image/svg+xml"},
     {".webp", "image/webp"}
 
 };
