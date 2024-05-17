@@ -35,6 +35,6 @@ public:
 
   std::string notFound(const Request &request) const;
 
-std::string OK(const Request &request) const;
+  std::string OK(const Request &request) const;
   void routeRequest() const;
 };
