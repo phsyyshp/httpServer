@@ -41,7 +41,7 @@ bool Request::parse(std::array<char, 1024> &buffer) {
   for syntax notation SEE syntax.hpp Elements
   */
   if (buffer[0] == '\0') {
-    std::cout << 'a';
+    std::cout << "Bad Buffer\n";
     return false;
   }
   bool isValid = true; // isNotBadRequest, isGoodRequest

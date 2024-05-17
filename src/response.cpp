@@ -94,13 +94,13 @@ std::string Response::statusLine(const Request &request, int statusCode) const {
     reasonPhrase = "Created";
     break;
   case 400:
-    reasonPhrase = "BAD REQUEST";
+    reasonPhrase = "Bad Request";
     break;
   case 404:
     reasonPhrase = "Not Found";
     break;
   case 501:
-    reasonPhrase = "NOT IMPLEMENTED";
+    reasonPhrase = "Not Implemented";
   default:
     break;
   }
