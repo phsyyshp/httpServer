@@ -94,7 +94,7 @@ bool Request::parse(std::array<char, 1024> &buffer) {
   while (true) {
     auto fieldLineEnd = std::find(fieldLineStart, buffer.end(), '\r');
     if (fieldLineEnd == buffer.end()) {
-      // field-line must have CRLF
+      std::cout << "Field-line must have  CRLF\n";
       return false;
     }
     if (fieldLineStart == fieldLineEnd) {
@@ -104,19 +104,20 @@ bool Request::parse(std::array<char, 1024> &buffer) {
     // RFC 9112: field-line   = field-name ":" OWS field-value OWS
     auto fieldNameEnd = std::find(fieldLineStart, fieldLineEnd, ':');
     if (fieldNameEnd == fieldLineEnd) {
-      // No field Name
+      std::cout << "No field name\n";
       return false;
     }
     std::string fieldName(fieldLineStart, fieldNameEnd);
     if (fieldName.length() == 0) {
       // empty  field name.
+      std::cout << "Empty field name\n";
       return false;
     }
     if (isOWS(fieldName.back())) {
       // TODO(): implement error
       /*RFC 9112: No whitespace is allowed between the field name and colon.*/
-
-      std::cout << 17;
+      std::cout
+          << "No whitespace is allowed between the field name and colon.\n";
       return false;
     }
 
@@ -126,7 +127,7 @@ bool Request::parse(std::array<char, 1024> &buffer) {
     auto fieldValueStart =
         std::find_if_not(std::next(fieldNameEnd, 1), fieldLineEnd, &isOWS);
     if (fieldValueStart == fieldLineEnd) {
-      // No field value;
+      std::cout << "No field value\n";
       return false;
     }
 
@@ -151,7 +152,7 @@ bool Request::parse(std::array<char, 1024> &buffer) {
   */
   // TODO(): add field value and repetitions error checks
   if (headersHash["Host"].empty()) {
-    std::cout << 11;
+    std::cout << "No host field\n";
     return false;
   }
 
