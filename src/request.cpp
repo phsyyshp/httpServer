@@ -58,13 +58,17 @@ bool Request::parse(std::array<char, 1024> &buffer) {
   following octets: SP, HTAB, VT (%x0B), FF (%x0C), or bare CR.;
   */
   auto requestLineEnd = std::find(buffer.begin(), buffer.end(), '\r');
+  if (requestLineEnd == buffer.end()) {
+    std::cout << "No CRLF\n";
+    return false;
+  }
   std::replace_if(buffer.begin(), requestLineEnd, isWhiteSpace, ' ');
   if (!parseRequestLine(buffer.begin(), requestLineEnd)) {
-    std::cout << 0;
+    std::cout << "Bad request-line\n";
     return false;
   }
   if (requestLineEnd == buffer.end()) {
-    std::cout << 'b';
+    std::cout << " No header fields\n";
     return false;
   }
 
@@ -73,6 +77,7 @@ bool Request::parse(std::array<char, 1024> &buffer) {
     /*RFC 9112: We must have header field lines. A server MUST respond with a
       400 (Bad Request) status code to any HTTP/1.1 request message that lacks a
       Host header field and to any request message that contains.*/
+    std::cout << " No header fields\n";
     return false;
   }
   /* RFC 9112: A recipient that receives whitespace between the start-line and
@@ -183,28 +188,30 @@ bool Request::parseRequestLine(
   /*RFC: 9112
    request-line   = method SP request-target SP HTTP-version
   */
-  // std::cout << *lineStart;
-  // std::cout.flush();
   auto tokenStart = lineStart;
   std::string method;
   std::string requestTarget;
   std::string version;
   if (!extractToken(tokenStart, lineEnd, method)) {
+    std::cout << std::string(lineStart, lineEnd) << "\n";
+    std::cout << "Empty method\n";
     return false;
   }
   if (!extractToken(tokenStart, lineEnd, requestTarget)) {
+    std::cout << "Empty request-target\n";
     return false;
   }
 
   if (!extractAbsolutePath(requestTarget)) {
 
-    std::cout << 1;
+    std::cout << "Bad request-target\n";
     return false;
   }
   // We can't use extract token here because it will modify the iterator of
   // start of version token, which is needed.
   skipPrecedingSP(tokenStart, lineEnd);
   if (tokenStart == lineEnd) {
+    std::cout << "empty version\n";
     return false;
   }
   auto versionEnd = std::find(tokenStart, lineEnd, ' ');
@@ -221,7 +228,7 @@ bool Request::parseRequestLine(
     auto nonSPChar =
         std::find_if_not(versionEnd, lineEnd, [](char c) { return c == ' '; });
     if (nonSPChar != lineEnd) {
-      // more than 3 tokens in request-line
+      std::cout << "more than 3 tokens in request-line\n";
       return false;
     }
   }
@@ -242,7 +249,7 @@ bool Request::extractAbsolutePath(std::string &requestTarget) const {
   query       = *( pchar / "/" / "?" )
   */
   if (*requestTarget.begin() != '/') {
-    std::cout << 3;
+    std::cout << "no / preceeds the request-target\n";
     return false;
   }
   auto absolutePathEndIt =

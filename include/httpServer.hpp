@@ -3,7 +3,7 @@
 class HttpServer {
 
 public:
-  HttpServer() {}
+  HttpServer() = default;
   void init() {
 
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
