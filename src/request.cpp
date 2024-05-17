@@ -204,20 +204,24 @@ bool Request::parseRequestLine(
   // We can't use extract token here because it will modify the iterator of
   // start of version token, which is needed.
   skipPrecedingSP(tokenStart, lineEnd);
-  auto tokenEnd = std::find(tokenStart, lineEnd, ' ');
-  version.assign(tokenStart, tokenEnd);
+  if (tokenStart == lineEnd) {
+    return false;
+  }
+  auto versionEnd = std::find(tokenStart, lineEnd, ' ');
+  version.assign(tokenStart, versionEnd);
   /*
   RFC 9112:
-  Recipients of an invalid request-line SHOULD respond with either a 400 (Bad
-  Request) error or a 301 (Moved Permanently) redirect with the request-target
-  properly encoded.
+  Recipients of an invalid request-line SHOULD respond with either a 400..
   No whitespace is allowed in the request-target.
   */
 
   // FIX IT: this is not robust
-  auto versionEndIt = std::find(tokenStart, lineEnd, ' ');
-  for (auto it = versionEndIt; it != lineEnd; it++) {
-    if (!isspace(*it)) {
+  if (versionEnd != lineEnd) {
+
+    auto nonSPChar =
+        std::find_if_not(versionEnd, lineEnd, [](char c) { return c == ' '; });
+    if (nonSPChar != lineEnd) {
+      // more than 3 tokens in request-line
       return false;
     }
   }
