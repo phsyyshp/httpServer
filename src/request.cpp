@@ -1,6 +1,8 @@
 #include "request.hpp"
+#include <algorithm>
 #include <cctype>
 #include <iostream>
+#include <iterator>
 #include <mutex>
 #include <stdexcept>
 #include <string>
@@ -55,77 +57,87 @@ bool Request::parse(std::array<char, 1024> &buffer) {
   preceding or trailing whitespace such whitespace includes one or more of the
   following octets: SP, HTAB, VT (%x0B), FF (%x0C), or bare CR.;
   */
-  auto requestLineEndIt = std::find(buffer.begin(), buffer.end(), '\r');
-  std::replace_if(buffer.begin(), requestLineEndIt, isWhiteSpace, ' ');
-  if (!parseRequestLine(buffer.begin(), requestLineEndIt)) {
+  auto requestLineEnd = std::find(buffer.begin(), buffer.end(), '\r');
+  std::replace_if(buffer.begin(), requestLineEnd, isWhiteSpace, ' ');
+  if (!parseRequestLine(buffer.begin(), requestLineEnd)) {
     std::cout << 0;
     return false;
   }
-  if (requestLineEndIt == buffer.end()) {
+  if (requestLineEnd == buffer.end()) {
     std::cout << 'b';
     return false;
   }
 
+  // Step 3. Headers
+  if (std::distance(requestLineEnd, buffer.end()) < 2) {
+    /*RFC 9112: We must have header field lines. A server MUST respond with a
+      400 (Bad Request) status code to any HTTP/1.1 request message that lacks a
+      Host header field and to any request message that contains.*/
+    return false;
+  }
   /* RFC 9112: A recipient that receives whitespace between the start-line and
    * the first header field MUST either reject the message as invalid or ...*/
-  if (isOWS(*(requestLineEndIt + 2))) {
+  if (isOWS(*std::next(requestLineEnd, 2))) {
     throw std::runtime_error("A sender MUST NOT send whitespace between the "
                              "start-line and the first header field.");
   }
+  auto fieldLineStart = std::next(requestLineEnd, 2);
 
-  // Step 3. Headers
-  auto headerLineStartIT = requestLineEndIt + 2;
-
-  if ((*headerLineStartIT) == '\r') {
-    return true;
-  }
-  auto headerLineEndIT = std::find(headerLineStartIT, buffer.end(), '\r');
-  int infLooper = 0;
+  // if ((*headerLineStartIT) == '\r') {
+  //   return true;
+  // }
   while (true) {
-    if (infLooper == 5000) {
-      throw std::runtime_error("infinite loop");
+    auto fieldLineEnd = std::find(fieldLineStart, buffer.end(), '\r');
+    if (fieldLineEnd == buffer.end()) {
+      // field-line must have CRLF
+      return false;
     }
-    infLooper++;
-    auto fieldNameEndIt = std::find(headerLineStartIT, headerLineEndIT, ':');
-    if (isOWS(*(fieldNameEndIt - 1))) {
+    if (fieldLineStart == fieldLineEnd) {
+      fieldLineStart = std::next(fieldLineEnd, 2);
+      break;
+    }
+    // RFC 9112: field-line   = field-name ":" OWS field-value OWS
+    auto fieldNameEnd = std::find(fieldLineStart, fieldLineEnd, ':');
+    if (fieldNameEnd == fieldLineEnd) {
+      // No field Name
+      return false;
+    }
+    std::string fieldName(fieldLineStart, fieldNameEnd);
+    if (fieldName.length() == 0) {
+      // empty  field name.
+      return false;
+    }
+    if (isOWS(fieldName.back())) {
       // TODO(): implement error
       /*RFC 9112: No whitespace is allowed between the field name and colon.*/
 
       std::cout << 17;
       return false;
     }
-    std::string fieldName(headerLineStartIT, fieldNameEndIt);
+
     /*RFC 9112: A field line value might be preceded and/or followed by optional
      * whitespace (OWS) */
 
-    auto fieldValueStartIt = (fieldNameEndIt + 1);
-    for (; fieldValueStartIt != headerLineEndIT; fieldValueStartIt++) {
-      if (!isOWS(*fieldValueStartIt)) {
-        break;
-      }
+    auto fieldValueStart =
+        std::find_if_not(std::next(fieldNameEnd, 1), fieldLineEnd, &isOWS);
+    if (fieldValueStart == fieldLineEnd) {
+      // No field value;
+      return false;
     }
 
-    auto fieldValueEndIt = headerLineEndIT;
-    for (; fieldValueStartIt != fieldValueEndIt; fieldValueEndIt--) {
-      if (!isOWS(*(fieldValueEndIt - 1))) {
+    auto fieldValueEnd = fieldLineEnd;
+    while (std::next(fieldValueEnd, -1) != fieldValueStart) {
+      if (!isOWS(*std::next(fieldValueEnd, -1))) {
         break;
       }
+      std::advance(fieldValueEnd, -1);
     }
-    std::string fieldValue(fieldValueStartIt, fieldValueEndIt);
+    std::string fieldValue(fieldValueStart, fieldValueEnd);
     headersHash[fieldName] = fieldValue;
-    if (*(headerLineEndIT + 2) == '\r') {
-      break;
-    }
-    headerLineStartIT = headerLineEndIT + 2;
-    headerLineEndIT = std::find(headerLineStartIT, buffer.end(), '\r');
+    fieldLineStart = fieldLineEnd + 2;
   }
   // Step 4. Body
-  auto bodyStartIt = headerLineEndIT + 4;
-  int i = 0;
-  for (auto it = bodyStartIt; buffer.end() != it; it++) {
-    body[i] = *it;
-    i++;
-  }
+  std::copy(fieldLineStart, buffer.end(), body.begin());
   /*
   RFC 9112: A server MUST respond with a 400 (Bad Request) status code to any
   HTTP/1.1 request message that lacks a Host header field and to any request
