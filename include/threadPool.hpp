@@ -1,31 +1,20 @@
 #pragma once
-#include "request.hpp"
-#include "response.hpp"
 #include <arpa/inet.h>
-#include <array>
-#include <cerrno> // For errno
+#include <condition_variable>
 #include <cstdlib>
 #include <cstring> // For strerror
 #include <fcntl.h> // For F_GETFL, F_SETFL
-#include <future>
-#include <iostream>
+#include <functional>
+#include <mutex>
 #include <netdb.h>
 #include <netinet/in.h>
-#include <string>
+#include <queue>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <thread>
 #include <unistd.h>
-#include <unistd.h> // For fcntl
-
-// C++ Program to demonstrate thread pooling
-
-#include <condition_variable>
-#include <functional>
-#include <iostream>
-#include <mutex>
-#include <queue>
-#include <thread>
+// This class is taken from https://www.geeksforgeeks.org/thread-pool-in-cpp/
+//  C++ Program to demonstrate thread pooling
 
 class ThreadPool {
 public:
