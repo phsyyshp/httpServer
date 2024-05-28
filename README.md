@@ -9,7 +9,7 @@
 ## Downloading and Building
 ```
 git clone --depth=1 https://github.com/phsyyshp/httpServer
-cd gameEngine
+cd httpServer
 mkdir build
 cd build
 cmake ..
