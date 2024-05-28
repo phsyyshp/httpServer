@@ -1,14 +1,21 @@
 #pragma once
+#include "request.hpp"
+#include "response.hpp"
 #include <arpa/inet.h>
+#include <array>
+#include <cerrno> // For errno
 #include <condition_variable>
 #include <cstdlib>
 #include <cstring> // For strerror
 #include <fcntl.h> // For F_GETFL, F_SETFL
 #include <functional>
+#include <future>
+#include <iostream>
 #include <mutex>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <queue>
+#include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <thread>
